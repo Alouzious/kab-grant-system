@@ -1,5 +1,22 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, FileText, Plus, Bell, Users, CheckCircle2, BarChart3, Settings, LogIn } from 'lucide-react';
+import {
+  LayoutDashboard,
+  FileText,
+  Plus,
+  Bell,
+  Users,
+  CheckCircle2,
+  BarChart3,
+  Settings,
+  Shield,
+  ClipboardList,
+  CalendarDays,
+  UserCheck,
+  ThumbsUp,
+  ThumbsDown,
+  Trophy,
+  Clock,
+} from 'lucide-react';
 
 export default function Sidebar({ role = 'applicant' }) {
   const menuItems = {
@@ -17,17 +34,21 @@ export default function Sidebar({ role = 'applicant' }) {
     ],
     admin: [
       { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-      { label: 'Users', href: '/admin/users', end: true, icon: Users },
-      { label: 'Reviewers', href: '/admin/reviewers', icon: Users },
-      { label: 'Grant Calls', href: '/admin/grant-calls', icon: FileText },
-      { label: 'Submitted Proposals', href: '/admin/proposals', icon: FileText },
-      { label: 'Reviewed Proposals', href: '/admin/reviewed', icon: CheckCircle2 },
-      { label: 'Reports', href: '/admin/reports', icon: BarChart3 },
+      { label: 'Grant Calls', href: '/admin/grant-calls', icon: CalendarDays },
+      { label: 'Users', href: '/admin/users', icon: Users },
+      { label: 'Reviewers', href: '/admin/reviewers', icon: UserCheck },
+      { type: 'divider', label: 'PROPOSALS' },
+      { label: 'Submitted', href: '/admin/proposals/submitted', icon: ClipboardList },
+      { label: 'Scheduled', href: '/admin/proposals/scheduled', icon: Clock },
+      { label: 'Reviewed', href: '/admin/proposals/reviewed', icon: CheckCircle2 },
+      { label: 'Approved', href: '/admin/proposals/approved', icon: ThumbsUp },
+      { label: 'Rejected', href: '/admin/proposals/rejected', icon: ThumbsDown },
+      { label: 'Awarded', href: '/admin/proposals/awarded', icon: Trophy },
     ],
     super_admin: [
       { label: 'Dashboard', href: '/super-admin/dashboard', icon: LayoutDashboard },
       { label: 'Admins', href: '/super-admin/admins', end: true, icon: Users },
-      { label: 'Roles', href: '/super-admin/roles', icon: LogIn },
+      { label: 'Roles', href: '/super-admin/roles', icon: Shield },
       { label: 'System Settings', href: '/super-admin/settings', icon: Settings },
       { label: 'Audit Logs', href: '/super-admin/audit', icon: BarChart3 },
     ],
@@ -37,12 +58,28 @@ export default function Sidebar({ role = 'applicant' }) {
 
   return (
     <aside className="w-64 bg-secondary text-white min-h-screen">
-      <div className="p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-accent mb-6">
-          {role}
+      <div className="p-4 border-b border-white/10">
+        <div className="flex items-center gap-3 mb-6">
+          <img src="/log1.jpg" alt="KAB-FIR Logo" className="h-14 w-14 rounded-lg" />
+          <div>
+            <h1 className="text-sm font-bold text-white leading-tight">KAB-FIR</h1>
+            <p className="text-xs text-white/70">Kabale University</p>
+          </div>
+        </div>
+        <h2 className="text-xs font-bold uppercase tracking-widest text-accent/80 mb-4">
+          {role.replace('_', ' ')}
         </h2>
-        <nav className="space-y-2">
+        <nav className="space-y-1">
           {items.map((item, index) => {
+            if (item.type === 'divider') {
+              return (
+                <div key={index} className="pt-4 pb-1">
+                  <p className="text-xs font-bold uppercase tracking-widest text-white/30 px-4">
+                    {item.label}
+                  </p>
+                </div>
+              );
+            }
             const Icon = item.icon;
             return (
               <NavLink
@@ -50,14 +87,14 @@ export default function Sidebar({ role = 'applicant' }) {
                 to={item.href}
                 end={item.end}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-2 rounded-md text-sm transition ${
+                  `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition ${
                     isActive
-                      ? 'bg-accent text-white font-medium'
-                      : 'hover:bg-accent hover:text-white'
+                      ? 'bg-accent text-white font-semibold'
+                      : 'text-white/70 hover:bg-white/10 hover:text-white'
                   }`
                 }
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-4 h-4 shrink-0" />
                 {item.label}
               </NavLink>
             );
