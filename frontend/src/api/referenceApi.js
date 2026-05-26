@@ -58,6 +58,16 @@ const mockResearchDisciplines = [
   { id: 7, name: 'Information Technology' },
 ];
 
+const mockInnovationSpecializations = [
+  { id: 1, name: 'Information Technology' },
+  { id: 2, name: 'Engineering and Manufacturing' },
+  { id: 3, name: 'Agriculture and Food Technology' },
+  { id: 4, name: 'Healthcare and Medical Devices' },
+  { id: 5, name: 'Energy and Environmental Solutions' },
+  { id: 6, name: 'Business and Financial Services' },
+  { id: 7, name: 'Education and Training' },
+];
+
 const mockGrantCalls = [
   { id: 1, title: 'Innovation Grant 2024', status: 'active', deadline: '2024-12-31' },
   { id: 2, title: 'Research Excellence 2024', status: 'active', deadline: '2024-11-30' },
@@ -121,6 +131,26 @@ export async function getResearchDisciplines() {
           id: d.id,
           label: d.name,
           value: d.id,
+        }))
+      );
+    }, 300);
+  });
+}
+
+/**
+ * Get all innovation specializations
+ * @returns {Promise<Array>} Array of innovation specialization objects
+ * 
+ * Future: Replace with axios.get('/api/innovation-specializations/')
+ */
+export async function getInnovationSpecializations() {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(
+        mockInnovationSpecializations.map((s) => ({
+          id: s.id,
+          label: s.name,
+          value: s.id,
         }))
       );
     }, 300);

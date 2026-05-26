@@ -36,6 +36,15 @@ export const typeOfResearchOptions = [
   { value: 'other', label: 'Other' },
 ];
 
+export const typeOfInnovationOptions = [
+  { value: 'new_product', label: 'New Product' },
+  { value: 'new_service', label: 'New Service' },
+  { value: 'new_process', label: 'New Process' },
+  { value: 'new_technology', label: 'New Technology' },
+  { value: 'new_business_model', label: 'New Business Model' },
+  { value: 'other', label: 'Other' },
+];
+
 export const proposalStatusOptions = [
   { value: 'draft', label: 'Draft' },
   { value: 'missing_attachments', label: 'Missing Attachments' },
