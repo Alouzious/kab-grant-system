@@ -332,28 +332,43 @@ export const getMyProposals = async () => {
 export const getProposalDetails = async (proposalId) => {
   try {
     // Replace with: const response = await axiosClient.get(`/applicant/proposals/${proposalId}`);
-    const proposal = mockProposals.find((p) => p.id === parseInt(proposalId));
+    const numericId = parseInt(proposalId);
+    
+    // Try to find in stored proposals first (user-created proposals)
+    const storedProposals = getStoredProposals();
+    let proposal = storedProposals.find((p) => p.id === numericId || p.id === proposalId);
+    
+    // Fall back to mock proposals if not found
+    if (!proposal) {
+      proposal = mockProposals.find((p) => p.id === numericId);
+    }
+    
+    // If still not found, return a clear not-found error
+    if (!proposal) {
+      throw new Error(`Proposal ${proposalId} not found`);
+    }
+    
+    const teamMembers = getStoredTeamMembers(proposal.id);
+    const attachments = getStoredAttachments(proposal.id);
+    
     const response = await new Promise((resolve) =>
       setTimeout(
         () =>
           resolve({
             data: {
               ...proposal,
-              piFirstName: 'Jane',
-              piLastName: 'Omondi',
-              piEmail: 'j.omondi@university.ac.ke',
-              piPhone: '+254712345678',
-              summary: 'This is a research proposal summary about AI-powered disease diagnosis.',
-              teamMembers: mockTeamMembers,
-              attachments: mockAttachments,
+              title: proposal.title || proposal.projectTitle || 'Untitled Proposal',
+              protocolNo: proposal.protocolNo || proposal.protocolNumber || `PR${new Date().getFullYear()}000`,
+              teamMembers: teamMembers || mockTeamMembers,
+              attachments: attachments || mockAttachments,
               reviewReport: {
                 status: 'pending',
                 reviewer: null,
                 feedback: null,
               },
               timeline: {
-                draftCreated: '2024-05-15T08:00:00',
-                attachmentsUploaded: '2024-05-20T10:30:00',
+                draftCreated: proposal.createdAt || '2024-05-15T08:00:00',
+                attachmentsUploaded: null,
                 submitted: null,
                 scheduledReview: null,
                 reviewed: null,
@@ -366,7 +381,7 @@ export const getProposalDetails = async (proposalId) => {
     );
     return response.data;
   } catch (error) {
-    throw new Error('Failed to fetch proposal details');
+    throw new Error(error.message || 'Failed to fetch proposal details');
   }
 };
 
@@ -376,10 +391,17 @@ export const createProposalDraft = async (payload) => {
     const id = getNextProposalId();
     const protocolNo = generateProtocolNumber();
     
+    // Use projectTitle from form, or fall back to other title fields
+    const proposalTitle = payload.projectTitle || payload.title || 'Untitled Proposal';
+    
     const newProposal = {
       id,
       protocolNo,
-      title: payload.title || 'Untitled Proposal',
+      protocol_no: protocolNo,
+      title: proposalTitle,
+      projectTitle: proposalTitle,
+      proposal_title: proposalTitle,
+      proposal_type: payload.proposal_type || 'research',
       status: 'draft',
       piName: `${payload.piFirstName} ${payload.piLastName}`,
       piFirstName: payload.piFirstName,
@@ -389,8 +411,14 @@ export const createProposalDraft = async (payload) => {
       faculty: payload.faculty,
       department: payload.department,
       attachmentsSummary: '0/9 Uploaded',
+      attachments_summary: '0/9 Uploaded',
+      attachments_uploaded: 0,
+      attachments_total: 9,
+      team_members_count: 0,
       membersCount: 0,
+      created_at: new Date().toISOString(),
       createdAt: new Date().toISOString().split('T')[0],
+      updated_at: new Date().toISOString(),
       updatedAt: new Date().toISOString().split('T')[0],
       ...payload,
     };
@@ -432,6 +460,51 @@ export const updateProposal = async (proposalId, payload) => {
     return response.data;
   } catch (error) {
     throw new Error('Failed to update proposal');
+  }
+};
+
+export const updateProposalDraft = async (proposalId, payload) => {
+  try {
+    // Replace with: const response = await axiosClient.put(`/applicant/proposals/${proposalId}`, payload);
+    const numericId = parseInt(proposalId);
+    const proposals = getStoredProposals();
+    const proposalIndex = proposals.findIndex((p) => p.id === numericId || p.id === proposalId);
+    
+    if (proposalIndex === -1) {
+      throw new Error(`Proposal ${proposalId} not found`);
+    }
+    
+    const existingProposal = proposals[proposalIndex];
+    
+    // Update proposal, preserving critical fields
+    const updatedProposal = {
+      ...existingProposal,
+      ...payload,
+      id: existingProposal.id,
+      protocolNo: existingProposal.protocolNo,
+      protocol_no: existingProposal.protocol_no,
+      created_at: existingProposal.created_at,
+      createdAt: existingProposal.createdAt,
+      attachments_uploaded: existingProposal.attachments_uploaded,
+      attachments_total: existingProposal.attachments_total,
+      team_members_count: existingProposal.team_members_count,
+      membersCount: existingProposal.membersCount,
+      status: existingProposal.status,
+      attachmentsSummary: existingProposal.attachmentsSummary,
+      attachments_summary: existingProposal.attachments_summary,
+      updated_at: new Date().toISOString(),
+      updatedAt: new Date().toISOString().split('T')[0],
+    };
+    
+    proposals[proposalIndex] = updatedProposal;
+    saveStoredProposals(proposals);
+    
+    const response = await new Promise((resolve) =>
+      setTimeout(() => resolve({ data: updatedProposal }), 500)
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(error.message || 'Failed to update proposal draft');
   }
 };
 
@@ -601,9 +674,21 @@ export const addProjectTeamMember = async (proposalId, payload) => {
   }
 };
 
-export const deleteProjectTeamMember = async (memberId) => {
+export const deleteProjectTeamMember = async (proposalId, memberId) => {
   try {
-    // Replace with: await axiosClient.delete(`/applicant/team-members/${memberId}`);
+    // Replace with: await axiosClient.delete(`/applicant/proposals/${proposalId}/team-members/${memberId}`);
+    const members = getStoredTeamMembers(proposalId);
+    const filteredMembers = members.filter((m) => m.id !== memberId);
+    saveStoredTeamMembers(proposalId, filteredMembers);
+
+    // Update proposal member count
+    const proposals = getStoredProposals();
+    const proposal = proposals.find((p) => p.id === proposalId);
+    if (proposal) {
+      proposal.membersCount = filteredMembers.length;
+      saveStoredProposals(proposals);
+    }
+
     await new Promise((resolve) => setTimeout(() => resolve(), 500));
     return { success: true };
   } catch (error) {

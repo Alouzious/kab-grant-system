@@ -7,7 +7,7 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Alert from '../../components/common/Alert';
 import Loader from '../../components/common/Loader';
-import { getProjectTeamMembers, addProjectTeamMember } from '../../api/applicantApi';
+import { getProjectTeamMembers, addProjectTeamMember, deleteProjectTeamMember } from '../../api/applicantApi';
 import { getFaculties, getDepartments, getResearchDisciplines } from '../../api/referenceApi';
 import { sexOptions, qualificationOptions, designationOptions } from '../../utils/formOptions';
 import { validateKABEmail, validatePhone, isOtherOption } from '../../utils/validations';
@@ -180,6 +180,19 @@ export default function ProjectTeamMembers() {
     }
   };
 
+  const handleDeleteMember = async (memberId) => {
+    if (window.confirm('Are you sure you want to remove this team member?')) {
+      try {
+        await deleteProjectTeamMember(proposalId, memberId);
+        setTeamMembers((prev) => prev.filter((member) => member.id !== memberId));
+        setSuccess('Team member removed successfully');
+        setTimeout(() => setSuccess(null), 3000);
+      } catch (err) {
+        setSubmitError(err.message || 'Failed to remove team member');
+      }
+    }
+  };
+
   if (loading) return <Loader />;
 
   const renderSelectWithOther = (fieldName, label, options, otherFieldName) => {
@@ -323,7 +336,7 @@ export default function ProjectTeamMembers() {
             <p className="text-muted">No team members added yet. Add your first team member using the form above.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="w-full overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
@@ -346,7 +359,11 @@ export default function ProjectTeamMembers() {
                     <td className="py-3 px-4 text-textMain">{member.department || '-'}</td>
                     <td className="py-3 px-4 text-textMain text-xs">{member.email || '-'}</td>
                     <td className="py-3 px-4">
-                      <Button size="sm" variant="danger">
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => handleDeleteMember(member.id)}
+                      >
                         Remove
                       </Button>
                     </td>
