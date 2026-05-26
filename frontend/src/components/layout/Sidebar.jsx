@@ -1,7 +1,36 @@
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, FileText, Plus, Bell, Users, CheckCircle2, BarChart3, Settings, LogIn } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, FileText, Plus, Bell, Users, CheckCircle2, BarChart3, Settings, LogIn, LogOut, User } from 'lucide-react';
+
+const mockUsers = {
+  applicant: {
+    name: 'Applicant User',
+    email: 'applicant@kab.ac.ug',
+  },
+  reviewer: {
+    name: 'Reviewer User',
+    email: 'reviewer@example.com',
+  },
+  admin: {
+    name: 'DRP Administrator',
+    email: 'admin@kab.ac.ug',
+  },
+  super_admin: {
+    name: 'Super Admin',
+    email: 'superadmin@kab.ac.ug',
+  },
+};
 
 export default function Sidebar({ role = 'applicant' }) {
+  const navigate = useNavigate();
+  const user = mockUsers[role] || mockUsers.applicant;
+
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to logout?')) {
+      // Clear any stored user data
+      localStorage.removeItem('user');
+      navigate('/');
+    }
+  };
   const menuItems = {
     applicant: [
       { label: 'Dashboard', href: '/applicant/dashboard', icon: LayoutDashboard },
@@ -36,8 +65,8 @@ export default function Sidebar({ role = 'applicant' }) {
   const items = menuItems[role] || menuItems.applicant;
 
   return (
-    <aside className="w-64 bg-secondary text-white min-h-screen">
-      <div className="p-6">
+    <aside className="w-64 bg-secondary text-white min-h-full overflow-y-auto flex-shrink-0 flex flex-col">
+      <div className="p-6 flex-1">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-accent mb-6">
           {role}
         </h2>
@@ -63,6 +92,26 @@ export default function Sidebar({ role = 'applicant' }) {
             );
           })}
         </nav>
+      </div>
+
+      {/* User Profile Section at Bottom */}
+      <div className="p-6 border-t border-white/20">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
+            <User className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white truncate">{user.name}</p>
+            <p className="text-xs text-white/70 truncate">{user.email}</p>
+          </div>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-2 px-4 py-2 rounded-md text-sm bg-white/10 hover:bg-white/20 transition text-white"
+        >
+          <LogOut className="w-4 h-4" />
+          Logout
+        </button>
       </div>
     </aside>
   );

@@ -124,7 +124,7 @@ export default function MyProposals() {
             <p className="text-muted mb-4">No proposals found.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="w-full overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
@@ -159,57 +159,81 @@ export default function MyProposals() {
                     <td className="py-3 px-4 text-textMain">{proposal.membersCount}</td>
                     <td className="py-3 px-4 text-muted">-</td>
                     <td className="py-3 px-4">
-                      <div className="flex gap-1 flex-wrap">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => navigate(`/applicant/proposals/${proposal.id}`)}
-                          disabled={actionLoading === proposal.id}
-                        >
-                          Details
-                        </Button>
+                      <div className="space-y-2">
+                        {/* Primary Action Button */}
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigate(`/applicant/proposals/${proposal.id}`)}
+                            disabled={actionLoading === proposal.id}
+                            className="flex-1"
+                          >
+                            Details
+                          </Button>
+                        </div>
+
+                        {/* Draft Actions */}
                         {proposal.status === 'draft' && (
                           <>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => navigate(`/applicant/proposals/${proposal.id}`)}
-                              disabled={actionLoading === proposal.id}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="accent"
-                              onClick={() => navigate(`/applicant/proposals/${proposal.id}/documents`)}
-                              disabled={actionLoading === proposal.id}
-                            >
-                              Upload
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="primary"
-                              onClick={() => navigate(`/applicant/proposals/${proposal.id}/team-members`)}
-                              disabled={actionLoading === proposal.id}
-                            >
-                              Members
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="warning"
-                              onClick={() => handleSubmit(proposal.id)}
-                              disabled={actionLoading === proposal.id}
-                            >
-                              {actionLoading === proposal.id ? 'Submitting...' : 'Submit'}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="danger"
-                              onClick={() => handleDelete(proposal.id)}
-                              disabled={actionLoading === proposal.id}
-                            >
-                              {actionLoading === proposal.id ? 'Deleting...' : 'Delete'}
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => {
+                                  const editPath = proposal.proposal_type === 'research'
+                                    ? `/applicant/proposals/${proposal.id}/edit/research`
+                                    : `/applicant/proposals/${proposal.id}/edit/innovation`;
+                                  navigate(editPath);
+                                }}
+                                disabled={actionLoading === proposal.id}
+                                className="flex-1"
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="accent"
+                                onClick={() => navigate(`/applicant/proposals/${proposal.id}/documents`)}
+                                disabled={actionLoading === proposal.id}
+                                className="flex-1"
+                              >
+                                Upload
+                              </Button>
+                            </div>
+
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="primary"
+                                onClick={() => navigate(`/applicant/proposals/${proposal.id}/team-members`)}
+                                disabled={actionLoading === proposal.id}
+                                className="flex-1"
+                              >
+                                Members
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="success"
+                                onClick={() => handleSubmit(proposal.id)}
+                                disabled={actionLoading === proposal.id}
+                                className="flex-1"
+                              >
+                                {actionLoading === proposal.id ? 'Submitting...' : 'Submit'}
+                              </Button>
+                            </div>
+
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="danger"
+                                onClick={() => handleDelete(proposal.id)}
+                                disabled={actionLoading === proposal.id}
+                                className="flex-1"
+                              >
+                                {actionLoading === proposal.id ? 'Deleting...' : 'Delete'}
+                              </Button>
+                            </div>
                           </>
                         )}
                       </div>

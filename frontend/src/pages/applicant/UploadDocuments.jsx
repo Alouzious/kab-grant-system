@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import PageHeader from '../../components/layout/PageHeader';
@@ -17,6 +17,7 @@ export default function UploadDocuments() {
   const [error, setError] = useState(null);
   const [uploadingId, setUploadingId] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(null);
+  const fileInputRefs = useRef({});
 
   useEffect(() => {
     const fetchAttachments = async () => {
@@ -34,6 +35,12 @@ export default function UploadDocuments() {
 
     fetchAttachments();
   }, [proposalId]);
+
+  const handleChooseFile = (attachmentId) => {
+    if (fileInputRefs.current[attachmentId]) {
+      fileInputRefs.current[attachmentId].click();
+    }
+  };
 
   const handleFileUpload = async (attachmentId, attachmentType, file) => {
     if (!file) return;
@@ -80,7 +87,7 @@ export default function UploadDocuments() {
       {uploadSuccess && <Alert variant="success">{uploadSuccess}</Alert>}
 
       <Card title="Required Attachments" subtitle="Upload all required documents for your proposal">
-        <div className="overflow-x-auto">
+        <div className="w-full overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border">
@@ -111,8 +118,10 @@ export default function UploadDocuments() {
                   <td className="py-3 px-4">
                     <div className="flex gap-2 items-center">
                       <input
+                        ref={(el) => {
+                          if (el) fileInputRefs.current[attachment.id] = el;
+                        }}
                         type="file"
-                        id={`file-${attachment.id}`}
                         className="hidden"
                         onChange={(e) =>
                           handleFileUpload(
@@ -121,19 +130,15 @@ export default function UploadDocuments() {
                             e.target.files?.[0]
                           )
                         }
-                        disabled={uploadingId === attachment.id}
                       />
-                      <label htmlFor={`file-${attachment.id}`} className="w-full">
-                        <Button
-                          as="span"
-                          size="sm"
-                          variant="accent"
-                          className="cursor-pointer"
-                          disabled={uploadingId === attachment.id}
-                        >
-                          {uploadingId === attachment.id ? 'Uploading...' : 'Choose'}
-                        </Button>
-                      </label>
+                      <Button
+                        size="sm"
+                        variant="accent"
+                        onClick={() => handleChooseFile(attachment.id)}
+                        disabled={uploadingId === attachment.id}
+                      >
+                        {uploadingId === attachment.id ? 'Uploading...' : 'Choose'}
+                      </Button>
                     </div>
                   </td>
                 </tr>

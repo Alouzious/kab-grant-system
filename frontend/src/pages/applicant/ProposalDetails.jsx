@@ -54,6 +54,22 @@ export default function ProposalDetails() {
     return labels[status] || status;
   };
 
+  const getProposalTypeBadge = (proposalType) => {
+    const variants = {
+      research: 'info',
+      innovation: 'accent',
+    };
+    return variants[proposalType] || 'default';
+  };
+
+  const getProposalTypeLabel = (proposalType) => {
+    const labels = {
+      research: 'Research',
+      innovation: 'Innovation',
+    };
+    return labels[proposalType] || proposalType;
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -69,16 +85,35 @@ export default function ProposalDetails() {
   if (error) return <Alert variant="danger">{error}</Alert>;
   if (!proposal) return <Alert variant="info">Proposal not found</Alert>;
 
+  const displayTitle = proposal.title || proposal.projectTitle || proposal.proposal_title || 'Untitled Proposal';
+
   return (
     <DashboardLayout role="applicant">
       <PageHeader
-        title={proposal.title}
+        title={displayTitle}
         subtitle={`Protocol: ${proposal.protocolNo}`}
       />
 
       <div className="space-y-6">
         {/* Summary Card */}
-        <Card title="Proposal Summary" subtitle={`Status: ${getStatusLabel(proposal.status)}`}>
+        <Card title="Proposal Summary">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <p className="text-sm font-medium text-muted mb-1">Status</p>
+              <Badge variant={getStatusBadge(proposal.status)}>
+                {getStatusLabel(proposal.status)}
+              </Badge>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted mb-1">Type</p>
+              {proposal.proposal_type && (
+                <Badge variant={getProposalTypeBadge(proposal.proposal_type)}>
+                  {getProposalTypeLabel(proposal.proposal_type)}
+                </Badge>
+              )}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="text-sm font-medium text-muted">Principal Investigator</p>
@@ -100,12 +135,6 @@ export default function ProposalDetails() {
               <p className="text-sm font-medium text-muted">Telephone</p>
               <p className="text-textMain">{proposal.piPhone}</p>
             </div>
-            <div className="md:col-span-2">
-              <p className="text-sm font-medium text-muted mb-2">Status</p>
-              <Badge variant={getStatusBadge(proposal.status)}>
-                {getStatusLabel(proposal.status)}
-              </Badge>
-            </div>
           </div>
         </Card>
 
@@ -117,7 +146,7 @@ export default function ProposalDetails() {
         {/* Team Members */}
         {proposal.teamMembers && proposal.teamMembers.length > 0 && (
           <Card title="Project Team Members" subtitle={`${proposal.teamMembers.length} members`}>
-            <div className="overflow-x-auto">
+            <div className="w-full overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
@@ -147,7 +176,7 @@ export default function ProposalDetails() {
         {/* Attachments */}
         {proposal.attachments && proposal.attachments.length > 0 && (
           <Card title="Uploaded Attachments">
-            <div className="overflow-x-auto">
+            <div className="w-full overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">

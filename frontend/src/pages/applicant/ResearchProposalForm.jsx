@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/common/Card';
@@ -7,9 +7,10 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Alert from '../../components/common/Alert';
 import Loader from '../../components/common/Loader';
-import { createProposalDraft } from '../../api/applicantApi';
+import { createProposalDraft, updateProposalDraft, getProposalDetails } from '../../api/applicantApi';
 import { getFaculties, getDepartments, getResearchDisciplines, getGrantCalls } from '../../api/referenceApi';
 import { sexOptions, qualificationOptions, designationOptions, typeOfResearchOptions } from '../../utils/formOptions';
+import { createAutosaveManager } from '../../utils/autosave';
 import {
   validateRequired,
   validateEmail,
@@ -44,12 +45,16 @@ const WORD_LIMITS = {
   references: 250,
 };
 
-export default function ResearchProposalForm() {
+export default function ResearchProposalForm({ isEdit = false }) {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const { id: proposalId } = useParams();
+  const autosaveManagerRef = useRef(null);
+  const [loading, setLoading] = useState(isEdit ? true : false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
   const [errors, setErrors] = useState({});
+  const [autosaveStatus, setAutosaveStatus] = useState(''); // 'saving', 'saved', ''
+  const [hasAutosavedDraft, setHasAutosavedDraft] = useState(false);
 
   // Dropdown loading states
   const [loadingDropdowns, setLoadingDropdowns] = useState(true);
@@ -58,7 +63,7 @@ export default function ResearchProposalForm() {
   const [disciplines, setDisciplines] = useState([]);
   const [grantCalls, setGrantCalls] = useState([]);
 
-  const [formData, setFormData] = useState({
+  const defaultFormData = {
     proposal_type: 'research',
     // Basic Project Information
     projectTitle: '',
@@ -101,10 +106,80 @@ export default function ResearchProposalForm() {
 
     // Compliance
     compliance: false,
-  });
+  };
 
-  // Load reference data on mount
+  const [formData, setFormData] = useState(defaultFormData);
+
+  // Load reference data and restore autosaved draft on mount
   useEffect(() => {
+    // Initialize autosave manager with appropriate key based on mode
+    const autosaveKey = isEdit && proposalId 
+      ? `kab_research_proposal_edit_${proposalId}`
+      : 'kab_research_proposal_draft';
+    autosaveManagerRef.current = createAutosaveManager(autosaveKey, defaultFormData);
+
+    // Load proposal data if in edit mode
+    if (isEdit && proposalId) {
+      const loadProposalData = async () => {
+        try {
+          const proposal = await getProposalDetails(proposalId);
+          // Populate form with proposal data
+          setFormData((prev) => ({
+            ...prev,
+            projectTitle: proposal.title || proposal.projectTitle || '',
+            piFirstName: proposal.piFirstName || '',
+            piLastName: proposal.piLastName || '',
+            piQualifications: proposal.piQualifications || '',
+            piQualificationsOther: proposal.piQualificationsOther || '',
+            piSex: proposal.piSex || '',
+            piDesignation: proposal.piDesignation || '',
+            piDesignationOther: proposal.piDesignationOther || '',
+            faculty: proposal.faculty || '',
+            department: proposal.department || '',
+            specialization: proposal.specialization || '',
+            piEmail: proposal.piEmail || '',
+            piPhone: proposal.piPhone || '',
+            researchType: proposal.researchType || '',
+            researchTypeOther: proposal.researchTypeOther || '',
+            grantCall: proposal.grantCall || '',
+            summary: proposal.summary || '',
+            problemStatement: proposal.problemStatement || '',
+            proposedSolution: proposal.proposedSolution || '',
+            relevance: proposal.relevance || '',
+            innovativeness: proposal.innovativeness || '',
+            mainObjective: proposal.mainObjective || '',
+            specificObjectives: proposal.specificObjectives || '',
+            methods: proposal.methods || '',
+            outcomes: proposal.outcomes || '',
+            dissemination: proposal.dissemination || '',
+            policyImpact: proposal.policyImpact || '',
+            scalability: proposal.scalability || '',
+            sustainability: proposal.sustainability || '',
+            genderConsiderations: proposal.genderConsiderations || '',
+            ethicalImpact: proposal.ethicalImpact || '',
+            capacityBuilding: proposal.capacityBuilding || '',
+            conflictOfInterest: proposal.conflictOfInterest || '',
+            references: proposal.references || '',
+            totalBudget: proposal.totalBudget || '',
+            compliance: proposal.compliance || false,
+          }));
+        } catch (err) {
+          setError(err.message || 'Failed to load proposal');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      loadProposalData();
+    } else {
+      // For create mode, check if autosaved draft exists
+      const autosavedData = autosaveManagerRef.current.restore();
+      if (autosavedData) {
+        setFormData(autosavedData);
+        setHasAutosavedDraft(true);
+      }
+    }
+
     const loadDropdownData = async () => {
       try {
         setLoadingDropdowns(true);
@@ -124,7 +199,7 @@ export default function ResearchProposalForm() {
     };
 
     loadDropdownData();
-  }, []);
+  }, [isEdit, proposalId]);
 
   // Load departments when faculty changes
   useEffect(() => {
@@ -145,10 +220,18 @@ export default function ResearchProposalForm() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
+    const updated = {
+      ...formData,
       [name]: type === 'checkbox' ? checked : value,
-    }));
+    };
+    
+    setFormData(updated);
+    
+    // Autosave the form data silently (debounced by autosave manager)
+    if (autosaveManagerRef.current) {
+      autosaveManagerRef.current.save(updated);
+    }
+    
     // Clear error for this field when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({
@@ -304,11 +387,28 @@ export default function ResearchProposalForm() {
     try {
       setLoading(true);
       setError(null);
-      const result = await createProposalDraft(formData);
+      
+      let result;
+      if (isEdit && proposalId) {
+        // Update existing proposal
+        result = await updateProposalDraft(proposalId, formData);
+        // Clear edit autosave after successful save
+        if (autosaveManagerRef.current) {
+          autosaveManagerRef.current.clear();
+        }
+      } else {
+        // Create new proposal
+        result = await createProposalDraft(formData);
+        // Clear create autosave after successful save
+        if (autosaveManagerRef.current) {
+          autosaveManagerRef.current.clear();
+        }
+      }
+      
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
-        navigate('/applicant/dashboard');
+        navigate('/applicant/proposals');
       }, 2000);
     } catch (err) {
       setError(err.message || 'Failed to save draft');
@@ -331,14 +431,17 @@ export default function ResearchProposalForm() {
     try {
       setLoading(true);
       setError(null);
-      const draft = await createProposalDraft(formData);
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        navigate('/applicant/dashboard');
-      }, 2000);
+      // Navigate to review page with proposal data
+      navigate('/applicant/proposals/review', {
+        state: {
+          proposalData: formData,
+          proposalType: 'research',
+          isEdit: isEdit,
+          proposalId: proposalId,
+        },
+      });
     } catch (err) {
-      setError(err.message || 'Failed to submit proposal');
+      setError(err.message || 'Failed to proceed to review');
     } finally {
       setLoading(false);
     }
@@ -479,8 +582,8 @@ export default function ResearchProposalForm() {
   return (
     <DashboardLayout role="applicant">
       <PageHeader
-        title="Submit Research Proposal"
-        subtitle="Complete the application form for your research project"
+        title={isEdit ? 'Edit Research Proposal' : 'Submit Research Proposal'}
+        subtitle={isEdit ? 'Update your proposal details' : 'Complete the application form for your research project'}
       />
 
       {error && <Alert variant="danger" title="Error">{error}</Alert>}
@@ -571,21 +674,44 @@ export default function ResearchProposalForm() {
 
         {/* Action Buttons */}
         <Card>
-          <div className="flex gap-4 justify-end">
-            <Button
-              type="submit"
-              variant="outline"
-              disabled={loading}
-              onClick={(e) => {
-                e.preventDefault();
-                handleSaveDraft(e);
-              }}
-            >
-              Save Draft
-            </Button>
-            <Button type="button" variant="primary" disabled={loading} onClick={handleSubmitProposal}>
-              {loading ? 'Processing...' : 'Submit Proposal'}
-            </Button>
+          <div className="space-y-4">
+            {hasAutosavedDraft && (
+              <div className="p-3 bg-warning bg-opacity-10 border border-warning rounded-md">
+                <p className="text-sm text-warning font-medium">
+                  💾 You have an autosaved draft. Your progress is being saved automatically as you type.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (autosaveManagerRef.current) {
+                      autosaveManagerRef.current.clear();
+                      setFormData(defaultFormData);
+                      setHasAutosavedDraft(false);
+                    }
+                  }}
+                  className="text-xs text-warning underline hover:no-underline mt-2"
+                >
+                  Clear saved draft
+                </button>
+              </div>
+            )}
+            
+            <div className="flex gap-4 justify-end">
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={loading}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSaveDraft(e);
+                }}
+              >
+                Save Draft
+              </Button>
+              <Button type="button" variant="primary" disabled={loading} onClick={handleSubmitProposal}>
+                {loading ? 'Processing...' : 'Submit Proposal'}
+              </Button>
+            </div>
           </div>
         </Card>
       </form>
