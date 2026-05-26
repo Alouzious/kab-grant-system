@@ -90,6 +90,22 @@ export default function MyProposals() {
     return labels[status] || status;
   };
 
+  const getProposalTypeBadge = (proposalType) => {
+    const variants = {
+      research: 'info',
+      innovation: 'accent',
+    };
+    return variants[proposalType] || 'default';
+  };
+
+  const getProposalTypeLabel = (proposalType) => {
+    const labels = {
+      research: 'Research',
+      innovation: 'Innovation',
+    };
+    return labels[proposalType] || proposalType;
+  };
+
   if (loading) return <Loader />;
 
   return (
@@ -114,6 +130,7 @@ export default function MyProposals() {
                 <tr className="border-b border-border">
                   <th className="text-left py-3 px-4 font-semibold text-textMain">Protocol No</th>
                   <th className="text-left py-3 px-4 font-semibold text-textMain">Proposal Title</th>
+                  <th className="text-left py-3 px-4 font-semibold text-textMain">Type</th>
                   <th className="text-left py-3 px-4 font-semibold text-textMain">Uploaded</th>
                   <th className="text-left py-3 px-4 font-semibold text-textMain">Status</th>
                   <th className="text-left py-3 px-4 font-semibold text-textMain">Members</th>
@@ -126,6 +143,13 @@ export default function MyProposals() {
                   <tr key={proposal.id} className="border-b border-border hover:bg-background">
                     <td className="py-3 px-4 text-textMain font-medium">{proposal.protocolNo}</td>
                     <td className="py-3 px-4 text-textMain">{proposal.title}</td>
+                    <td className="py-3 px-4">
+                      {proposal.proposal_type && (
+                        <Badge variant={getProposalTypeBadge(proposal.proposal_type)}>
+                          {getProposalTypeLabel(proposal.proposal_type)}
+                        </Badge>
+                      )}
+                    </td>
                     <td className="py-3 px-4 text-sm text-muted">{proposal.attachmentsSummary}</td>
                     <td className="py-3 px-4">
                       <Badge variant={getStatusBadge(proposal.status)}>

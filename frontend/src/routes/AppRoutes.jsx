@@ -1,7 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ApplicantDashboard from '../pages/applicant/ApplicantDashboard';
 import MyProposals from '../pages/applicant/MyProposals';
-import SubmitProposal from '../pages/applicant/SubmitProposal';
+import ProposalTypeSelection from '../pages/applicant/ProposalTypeSelection';
+import ResearchProposalForm from '../pages/applicant/ResearchProposalForm';
+import InnovationProposalForm from '../pages/applicant/InnovationProposalForm';
 import ProposalDetails from '../pages/applicant/ProposalDetails';
 import UploadDocuments from '../pages/applicant/UploadDocuments';
 import ProjectTeamMembers from '../pages/applicant/ProjectTeamMembers';
@@ -16,7 +18,9 @@ export default function AppRoutes() {
       {/* Applicant Routes */}
       <Route path="/applicant/dashboard" element={<ApplicantDashboard />} />
       <Route path="/applicant/proposals" element={<MyProposals />} />
-      <Route path="/applicant/proposals/new" element={<SubmitProposal />} />
+      <Route path="/applicant/proposals/new" element={<ProposalTypeSelection />} />
+      <Route path="/applicant/proposals/new/research" element={<ResearchProposalForm />} />
+      <Route path="/applicant/proposals/new/innovation" element={<InnovationProposalForm />} />
       <Route path="/applicant/proposals/:id" element={<ProposalDetails />} />
       <Route path="/applicant/proposals/:id/documents" element={<UploadDocuments />} />
       <Route path="/applicant/proposals/:id/team-members" element={<ProjectTeamMembers />} />
