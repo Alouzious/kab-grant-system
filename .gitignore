@@ -1,0 +1,79 @@
+ ─── Environment & Secrets ───────────────
+.env
+.env.*
+!.env.example
+
+# ─── Python ──────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+
+# ─── Virtual Environments ────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ─── Distribution / Build ────────────────
+*.egg-info/
+*.egg
+dist/
+build/
+wheels/
+sdist/
+MANIFEST
+
+# ─── Testing & Coverage ──────────────────
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.coveragerc
+nosetests.xml
+test-results/
+
+# ─── Type Checking ───────────────────────
+.mypy_cache/
+.dmypy.json
+.pytype/
+.pyre/
+
+# ─── Alembic ─────────────────────────────
+# Keep versions folder but ignore any local test migrations
+# alembic/versions/*.py  ← do NOT ignore these, they must be committed
+
+# ─── IDEs & Editors ──────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ─── Logs ────────────────────────────────
+*.log
+logs/
+log/
+
+# ─── Uploads / Media (local dev only) ────
+uploads/
+media/
+
+# ─── Jupyter ─────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ─── Docker (if added later) ─────────────
+*.env.docker
+
+# ─── OS ──────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+ehthumbs.db
+Desktop.ini
