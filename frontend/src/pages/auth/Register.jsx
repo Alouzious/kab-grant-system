@@ -51,7 +51,6 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
     if (!form.first_name || !form.surname || !form.email || !form.password || !form.confirm_password) {
       setError('Please fill in all required fields.');
       return;
@@ -60,7 +59,6 @@ export default function Register() {
       setError('Passwords do not match.');
       return;
     }
-
     setLoading(true);
     try {
       await registerUser(form);
@@ -72,6 +70,9 @@ export default function Register() {
       setLoading(false);
     }
   };
+
+  const inputClass = "w-full px-4 py-2.5 border border-border rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition";
+  const selectClass = "w-full px-4 py-2.5 border border-border rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition";
 
   if (success) {
     return (
@@ -116,185 +117,83 @@ export default function Register() {
 
         <div className="rounded-2xl p-8 shadow-sm" style={{ backgroundColor: '#FFFFFF', border: '1px solid #D9E2E7' }}>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Personal Info */}
             <div>
               <h3 className="text-sm font-semibold text-textMain uppercase tracking-wide mb-4 pb-2 border-b border-border">
                 Personal Information
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-textMain mb-1.5">
-                    First Name <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="first_name"
-                    value={form.first_name}
-                    onChange={handleChange}
-                    placeholder="e.g. John"
-                    className="w-full px-4 py-2.5 border border-border rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:bg-white [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:text-gray-800"
-                  />
+                  <label className="block text-sm font-medium text-textMain mb-1.5">First Name <span className="text-danger">*</span></label>
+                  <input type="text" name="first_name" value={form.first_name} onChange={handleChange} placeholder="e.g. John" className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-textMain mb-1.5">
-                    Surname <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="surname"
-                    value={form.surname}
-                    onChange={handleChange}
-                    placeholder="e.g. Mugisha"
-                    className="w-full px-4 py-2.5 border border-border rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:bg-white [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:text-gray-800"
-                  />
+                  <label className="block text-sm font-medium text-textMain mb-1.5">Surname <span className="text-danger">*</span></label>
+                  <input type="text" name="surname" value={form.surname} onChange={handleChange} placeholder="e.g. Mugisha" className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-textMain mb-1.5">
-                    Other Name
-                  </label>
-                  <input
-                    type="text"
-                    name="other_name"
-                    value={form.other_name}
-                    onChange={handleChange}
-                    placeholder="Optional"
-                    className="w-full px-4 py-2.5 border border-border rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:bg-white [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:text-gray-800"
-                  />
+                  <label className="block text-sm font-medium text-textMain mb-1.5">Other Name</label>
+                  <input type="text" name="other_name" value={form.other_name} onChange={handleChange} placeholder="Optional" className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-textMain mb-1.5">
-                    Gender <span className="text-danger">*</span>
-                  </label>
-                  <select
-                    name="gender"
-                    value={form.gender}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-border rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:bg-white [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:text-gray-800"
-                  >
+                  <label className="block text-sm font-medium text-textMain mb-1.5">Gender <span className="text-danger">*</span></label>
+                  <select name="gender" value={form.gender} onChange={handleChange} className={selectClass}>
                     <option value="">Select gender</option>
-                    {GENDER_OPTIONS.map((g) => (
-                      <option key={g} value={g}>{g}</option>
-                    ))}
+                    {GENDER_OPTIONS.map((g) => (<option key={g} value={g}>{g}</option>))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-textMain mb-1.5">
-                    Phone Number <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={form.phone}
-                    onChange={handleChange}
-                    placeholder="+256700000000"
-                    className="w-full px-4 py-2.5 border border-border rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:bg-white [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:text-gray-800"
-                  />
+                  <label className="block text-sm font-medium text-textMain mb-1.5">Phone Number <span className="text-danger">*</span></label>
+                  <input type="tel" name="phone" value={form.phone} onChange={handleChange} placeholder="+256700000000" className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-textMain mb-1.5">
-                    Email Address <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    placeholder="you@kab.ac.ug"
-                    className="w-full px-4 py-2.5 border border-border rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:bg-white [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:text-gray-800"
-                  />
+                  <label className="block text-sm font-medium text-textMain mb-1.5">Email Address <span className="text-danger">*</span></label>
+                  <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="you@kab.ac.ug" className={inputClass} />
                   <p className="text-xs text-muted mt-1">Must be a @kab.ac.ug email address</p>
                 </div>
               </div>
             </div>
 
-            {/* Faculty & Department */}
             <div>
               <h3 className="text-sm font-semibold text-textMain uppercase tracking-wide mb-4 pb-2 border-b border-border">
                 Academic Details
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-textMain mb-1.5">
-                    Faculty <span className="text-danger">*</span>
-                  </label>
-                  <select
-                    name="faculty_id"
-                    value={form.faculty_id}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-border rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:bg-white [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:text-gray-800"
-                  >
+                  <label className="block text-sm font-medium text-textMain mb-1.5">Faculty <span className="text-danger">*</span></label>
+                  <select name="faculty_id" value={form.faculty_id} onChange={handleChange} className={selectClass}>
                     <option value="">Select faculty</option>
-                    {faculties.map((f) => (
-                      <option key={f.id} value={f.id}>{f.name}</option>
-                    ))}
+                    {faculties.map((f) => (<option key={f.id} value={f.id}>{f.name}</option>))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-textMain mb-1.5">
-                    Department <span className="text-danger">*</span>
-                  </label>
-                  <select
-                    name="department_id"
-                    value={form.department_id}
-                    onChange={handleChange}
-                    disabled={!form.faculty_id}
-                    className="w-full px-4 py-2.5 border border-border rounded-lg bg-background text-textMain text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition disabled:opacity-50"
-                  >
+                  <label className="block text-sm font-medium text-textMain mb-1.5">Department <span className="text-danger">*</span></label>
+                  <select name="department_id" value={form.department_id} onChange={handleChange} disabled={!form.faculty_id} className={selectClass + " disabled:opacity-50"}>
                     <option value="">Select department</option>
-                    {departments.map((d) => (
-                      <option key={d.id} value={d.id}>{d.name}</option>
-                    ))}
+                    {departments.map((d) => (<option key={d.id} value={d.id}>{d.name}</option>))}
                   </select>
                 </div>
               </div>
             </div>
 
-            {/* Password */}
             <div>
               <h3 className="text-sm font-semibold text-textMain uppercase tracking-wide mb-4 pb-2 border-b border-border">
                 Set Password
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-textMain mb-1.5">
-                    Password <span className="text-danger">*</span>
-                  </label>
+                  <label className="block text-sm font-medium text-textMain mb-1.5">Password <span className="text-danger">*</span></label>
                   <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      name="password"
-                      value={form.password}
-                      onChange={handleChange}
-                      placeholder="Min. 8 characters"
-                      className="w-full px-4 py-2.5 pr-11 border border-border rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:bg-white [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:text-gray-800"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((p) => !p)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-textMain transition"
-                    >
+                    <input type={showPassword ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange} placeholder="Min. 8 characters" className={inputClass + " pr-11"} />
+                    <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-textMain transition">
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-textMain mb-1.5">
-                    Confirm Password <span className="text-danger">*</span>
-                  </label>
+                  <label className="block text-sm font-medium text-textMain mb-1.5">Confirm Password <span className="text-danger">*</span></label>
                   <div className="relative">
-                    <input
-                      type={showConfirm ? 'text' : 'password'}
-                      name="confirm_password"
-                      value={form.confirm_password}
-                      onChange={handleChange}
-                      placeholder="Re-enter password"
-                      className="w-full px-4 py-2.5 pr-11 border border-border rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:bg-white [rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition [&>option]:bg-white [&>option]:text-gray-800">option]:text-gray-800"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirm((p) => !p)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-textMain transition"
-                    >
+                    <input type={showConfirm ? 'text' : 'password'} name="confirm_password" value={form.confirm_password} onChange={handleChange} placeholder="Re-enter password" className={inputClass + " pr-11"} />
+                    <button type="button" onClick={() => setShowConfirm((p) => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-textMain transition">
                       {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
@@ -302,16 +201,8 @@ export default function Register() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-primary text-white font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <UserPlus className="w-4 h-4" />
-              )}
+            <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 bg-primary text-white font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed">
+              {loading ? (<span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />) : (<UserPlus className="w-4 h-4" />)}
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
@@ -319,9 +210,7 @@ export default function Register() {
 
         <p className="text-center text-sm text-muted mt-6">
           Already have an account?{' '}
-          <Link to="/login" className="text-primary font-medium hover:underline">
-            Sign in
-          </Link>
+          <Link to="/login" className="text-primary font-medium hover:underline">Sign in</Link>
         </p>
         <p className="text-center text-sm text-muted mt-2">
           <Link to="/" className="hover:underline">← Back to Home</Link>
