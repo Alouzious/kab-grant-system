@@ -121,7 +121,7 @@ class User(Base):
     department       = relationship("Department", back_populates="users")
     proposals        = relationship("Proposal", back_populates="created_by_user", foreign_keys="Proposal.created_by")
     otp_tokens       = relationship("OTPToken", back_populates="user")
-    reviewer_profile = relationship("Reviewer", back_populates="user", uselist=False)
+    reviewer_profile = relationship("Reviewer", back_populates="user", uselist=False, foreign_keys="[Reviewer.user_id]")
     status_changes   = relationship("ProposalStatusHistory", back_populates="changed_by_user")
 
 
