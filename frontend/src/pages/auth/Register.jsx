@@ -162,14 +162,14 @@ export default function Register() {
                   <label className="block text-sm font-medium text-textMain mb-1.5">Faculty <span className="text-danger">*</span></label>
                   <select name="faculty_id" value={form.faculty_id} onChange={handleChange} className={selectClass}>
                     <option value="">Select faculty</option>
-                    {faculties.map((f) => (<option key={f.id} value={f.id}>{f.name}</option>))}
+                    {faculties.map((f) => (<option key={f.id} value={f.id}>{f.label || f.name}</option>))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-textMain mb-1.5">Department <span className="text-danger">*</span></label>
                   <select name="department_id" value={form.department_id} onChange={handleChange} disabled={!form.faculty_id} className={selectClass + " disabled:opacity-50"}>
                     <option value="">Select department</option>
-                    {departments.map((d) => (<option key={d.id} value={d.id}>{d.name}</option>))}
+                    {departments.map((d) => (<option key={d.id} value={d.id}>{d.label || d.name}</option>))}
                   </select>
                 </div>
               </div>
