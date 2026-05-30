@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  @apply bg-background text-textMain;
+  margin: 0;
+}
+
+.page-container {
+  @apply p-6;
+}
+
+.card {
+  @apply bg-surface rounded-lg shadow-sm border border-border p-6;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-textMain mb-1;
+}
+
+.form-input {
+  @apply w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent focus:border-accent;
+}
+
+.table-container {
+  @apply bg-surface rounded-lg border border-border shadow-sm overflow-hidden;
+}
+
+.section-header {
+  @apply bg-accent text-white px-4 py-3 text-sm font-semibold;
+}
