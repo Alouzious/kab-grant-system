@@ -9,7 +9,6 @@ import {
   getGrantCalls, 
   createGrantCall, 
   updateGrantCall, 
-  toggleGrantCall, 
   deleteGrantCall,
   openApplicationWindow,
   closeApplicationWindow,
@@ -153,7 +152,7 @@ export default function GrantCalls() {
 
   const handleToggleActive = async (grant) => {
     try {
-      await toggleGrantCall(grant.id);
+      await updateGrantCall(grant.id, { is_active: !grant.is_active });
       setGrants((prev) =>
         prev.map((g) =>
           g.id === grant.id ? { ...g, is_active: !g.is_active } : g
