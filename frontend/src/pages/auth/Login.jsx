@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { loginUser } from '../../api/authApi';
+import { loginUser, getMe } from '../../api/authApi';
 import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
 
 export default function Login() {
@@ -28,12 +28,28 @@ export default function Login() {
     setLoading(true);
     try {
       // POST /api/v1/auth/login → { access_token, refresh_token, token_type, user_id, role, must_change_password }
-      const data = await loginUser({ email: form.email, password: form.password });
-      login(data);
-      if (data.must_change_password) {
+      const loginData = await loginUser({ email: form.email, password: form.password });
+      
+      // Store token first so getMe() can use it in Authorization header
+      localStorage.setItem('authToken', loginData.access_token);
+      
+      // GET /api/v1/auth/me → { id, first_name, surname, other_name, gender, phone, email, role, faculty_id, department_id, is_active, created_at }
+      const userData = await getMe();
+      
+      // Merge both responses
+      const fullUserData = {
+        ...userData,
+        access_token: loginData.access_token,
+        refresh_token: loginData.refresh_token,
+        token_type: loginData.token_type,
+        must_change_password: loginData.must_change_password,
+      };
+      
+      login(fullUserData);
+      if (loginData.must_change_password) {
         navigate('/change-password', { replace: true });
       } else {
-        navigate(redirectPathForRole(data.role), { replace: true });
+        navigate(redirectPathForRole(loginData.role), { replace: true });
       }
     } catch (err) {
       const detail = err.response?.data?.detail;
