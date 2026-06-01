@@ -19,7 +19,7 @@ import {
   User,
 } from 'lucide-react';
 
-export default function Sidebar({ role = 'staff' }) {
+export default function Sidebar({ role = 'staff', onNavClick }) {
   const { user, logout } = useAuth();
 
   const getMenuItems = () => {
@@ -121,6 +121,7 @@ export default function Sidebar({ role = 'staff' }) {
                 key={index}
                 to={item.href}
                 end={item.end}
+                onClick={onNavClick}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition ${
                     isActive

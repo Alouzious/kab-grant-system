@@ -9,10 +9,12 @@ import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
 import Loader from '../../components/common/Loader';
+import { useAuth } from '../../context/AuthContext';
 import { getApplicantDashboard, getMyProposals, deleteDraft, submitProposal } from '../../api/applicantApi';
 
 export default function ApplicantDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [dashboard, setDashboard] = useState(null);
   const [proposals, setProposals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -112,11 +114,14 @@ export default function ApplicantDashboard() {
   };
 
   if (loading) return <Loader />;
+const userFullName = user ? `${user.first_name} ${user.surname}` : 'Researcher';
+  const isFirstLogin = proposals.length === 0;
+  const greeting = isFirstLogin ? `Welcome, ${userFullName}` : `Welcome back, ${userFullName}`;
 
   return (
     <DashboardLayout role="applicant">
       <PageHeader
-        title={`Welcome back, ${dashboard?.applicantName || 'Researcher'}`}
+        title={greeting}
         subtitle="Manage your research proposals and submissions"
       />
 
