@@ -284,7 +284,7 @@ export default function Register() {
                     <select name="faculty_id" value={form.faculty_id} onChange={handleChange} className={selectClass}>
                       <option value="">Select faculty</option>
                       {faculties.map((f) => (
-                        <option key={f.id} value={f.id}>{f.name}</option>
+                        <option key={f.id} value={f.id}>{f.label}</option>
                       ))}
                     </select>
                   </div>
@@ -303,7 +303,7 @@ export default function Register() {
                     >
                       <option value="">{form.faculty_id ? 'Select department' : 'Select faculty first'}</option>
                       {departments.map((d) => (
-                        <option key={d.id} value={d.id}>{d.name}</option>
+                        <option key={d.id} value={d.id}>{d.label}</option>
                       ))}
                     </select>
                   </div>

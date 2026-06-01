@@ -54,27 +54,58 @@ export async function getSystemSettings() {
 // ─── DEPRECATED/LOCAL-ONLY FUNCTIONS ──────────────────────────────────────────
 
 /**
- * @deprecated Research disciplines not exposed by API
- * These should be configured server-side during reviewer creation
+ * Research disciplines for proposal forms
+ * These are static options not exposed by backend API
  */
 export async function getResearchDisciplines() {
-  console.warn('getResearchDisciplines: API endpoint not available');
-  return [];
+  return [
+    { id: 1, label: 'Engineering', value: 'engineering' },
+    { id: 2, label: 'Natural Sciences', value: 'natural_sciences' },
+    { id: 3, label: 'Social Sciences', value: 'social_sciences' },
+    { id: 4, label: 'Medical Sciences', value: 'medical_sciences' },
+    { id: 5, label: 'Agriculture', value: 'agriculture' },
+    { id: 6, label: 'Technology & ICT', value: 'technology_ict' },
+    { id: 7, label: 'Business & Economics', value: 'business_economics' },
+    { id: 8, label: 'Other', value: 'other' },
+  ];
 }
 
 /**
- * @deprecated Innovation specializations not exposed by API
- * Should be implemented as backend reference data if needed
+ * Innovation specializations for proposal forms
+ * These are static options not exposed by backend API
  */
 export async function getInnovationSpecializations() {
-  console.warn('getInnovationSpecializations: API endpoint not available');
-  return [];
+  return [
+    { id: 1, label: 'Software & Apps', value: 'software_apps' },
+    { id: 2, label: 'Hardware & Devices', value: 'hardware_devices' },
+    { id: 3, label: 'Agricultural Innovation', value: 'agricultural_innovation' },
+    { id: 4, label: 'Healthcare Solutions', value: 'healthcare_solutions' },
+    { id: 5, label: 'Clean Energy', value: 'clean_energy' },
+    { id: 6, label: 'Business Model', value: 'business_model' },
+    { id: 7, label: 'Environmental Solutions', value: 'environmental_solutions' },
+    { id: 8, label: 'Other', value: 'other' },
+  ];
 }
 
 /**
- * @deprecated Use adminApi.getGrantCalls() instead
+ * Get all available grant calls for applicants to choose from
+ * GET /api/v1/admin/grant-calls
+ * Applicants see only OPEN grant calls
  */
 export async function getGrantCalls() {
-  console.warn('getGrantCalls: Use adminApi.getGrantCalls() instead');
-  return [];
+  try {
+    const response = await axiosClient.get('/admin/grant-calls');
+    return response.data.map((call) => ({
+      id: call.id,
+      name: call.title,
+      value: call.id,
+      description: call.description,
+      opening_date: call.opening_date,
+      closing_date: call.closing_date,
+      status: call.status,
+    }));
+  } catch (error) {
+    console.warn('getGrantCalls: Failed to fetch grant calls', error);
+    return [];
+  }
 }

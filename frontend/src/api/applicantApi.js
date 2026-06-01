@@ -30,6 +30,28 @@ export const getApplicantDashboard = async () => {
   }
 };
 
+// ─── Grant Calls (Available for Applicants) ───────────────────────────────────
+
+/**
+ * Get all available grant calls (applicants see only open calls).
+ * GET /api/v1/admin/grant-calls
+ * Returns array of grant calls with title, description, deadline, etc.
+ */
+export const getAvailableGrantCalls = async () => {
+  const response = await axiosClient.get('/admin/grant-calls');
+  return response.data;
+};
+
+/**
+ * Get details of a specific grant call.
+ * GET /api/v1/admin/grant-calls/{call_id}
+ * Returns full grant call object with all details
+ */
+export const getGrantCallDetails = async (callId) => {
+  const response = await axiosClient.get(`/admin/grant-calls/${callId}`);
+  return response.data;
+};
+
 // ─── My Proposals ─────────────────────────────────────────────────────────────
 
 /**
