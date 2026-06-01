@@ -1,709 +1,282 @@
 import axiosClient from './axiosClient';
 
-// localStorage keys
-const PROPOSALS_STORAGE_KEY = 'kab_proposals';
-const NEXT_ID_STORAGE_KEY = 'kab_next_proposal_id';
-const NEXT_PROTOCOL_NUMBER_STORAGE_KEY = 'kab_next_protocol_number';
+// ─── Dashboard ────────────────────────────────────────────────────────────────
 
-// Mock data
-const initialMockProposals = [
-  {
-    id: 1,
-    protocolNo: 'KAB-2024-001',
-    title: 'AI-Powered Disease Diagnosis System',
-    status: 'draft',
-    piName: 'Dr. Jane Omondi',
-    faculty: 'Faculty of Engineering',
-    department: 'Computer Science',
-    attachmentsSummary: '3 of 7 uploaded',
-    membersCount: 2,
-    createdAt: '2024-05-15',
-    updatedAt: '2024-05-20',
-  },
-  {
-    id: 2,
-    protocolNo: 'KAB-2024-002',
-    title: 'Water Purification Technology for Rural Areas',
-    status: 'submitted',
-    piName: 'Prof. John Kipchoge',
-    faculty: 'Faculty of Science',
-    department: 'Chemistry',
-    attachmentsSummary: '7 of 7 uploaded',
-    membersCount: 3,
-    createdAt: '2024-04-10',
-    updatedAt: '2024-05-10',
-  },
-  {
-    id: 3,
-    protocolNo: 'KAB-2024-003',
-    title: 'Climate-Smart Agriculture Solutions',
-    status: 'under_review',
-    piName: 'Dr. Grace Kiplagat',
-    faculty: 'Faculty of Agriculture',
-    department: 'Agronomy',
-    attachmentsSummary: '7 of 7 uploaded',
-    membersCount: 4,
-    createdAt: '2024-03-05',
-    updatedAt: '2024-04-20',
-  },
-];
-
-const mockNotifications = [
-  {
-    id: 1,
-    type: 'draft_saved',
-    title: 'Draft Saved',
-    message: 'Your proposal draft has been saved successfully.',
-    createdAt: '2024-05-20T10:30:00',
-    read: false,
-  },
-  {
-    id: 2,
-    type: 'missing_attachments',
-    title: 'Missing Attachments',
-    message: 'Proposal KAB-2024-001 is missing 4 required attachments.',
-    createdAt: '2024-05-19T14:15:00',
-    read: false,
-  },
-  {
-    id: 3,
-    type: 'proposal_submitted',
-    title: 'Proposal Submitted',
-    message: 'Your proposal KAB-2024-002 has been submitted successfully.',
-    createdAt: '2024-05-10T09:00:00',
-    read: true,
-  },
-  {
-    id: 4,
-    type: 'scheduled_review',
-    title: 'Review Scheduled',
-    message: 'Your proposal KAB-2024-002 is scheduled for review on May 25, 2024.',
-    createdAt: '2024-05-08T11:20:00',
-    read: true,
-  },
-];
-
-const mockTeamMembers = [
-  {
-    id: 1,
-    firstName: 'Jane',
-    lastName: 'Omondi',
-    qualifications: 'PhD in Computer Science',
-    gender: 'Female',
-    designation: 'Principal Investigator',
-    faculty: 'Faculty of Engineering',
-    department: 'Computer Science',
-    specialization: 'Machine Learning',
-    email: 'j.omondi@university.ac.ke',
-    phone: '+254712345678',
-  },
-  {
-    id: 2,
-    firstName: 'Peter',
-    lastName: 'Kimani',
-    qualifications: 'MSc in Data Science',
-    gender: 'Male',
-    designation: 'Co-Investigator',
-    faculty: 'Faculty of Engineering',
-    department: 'Computer Science',
-    specialization: 'Data Analytics',
-    email: 'p.kimani@university.ac.ke',
-    phone: '+254723456789',
-  },
-];
-
-const mockAttachments = [
-  {
-    id: 1,
-    type: 'main_proposal',
-    name: 'Main Proposal Document',
-    required: true,
-    status: 'uploaded',
-    fileName: 'proposal_main.pdf',
-    uploadedAt: '2024-05-20T10:15:00',
-  },
-  {
-    id: 2,
-    type: 'budget',
-    name: 'Budget',
-    required: true,
-    status: 'not_uploaded',
-    fileName: null,
-  },
-  {
-    id: 3,
-    type: 'work_plan',
-    name: 'Work Plan / Gantt Chart',
-    required: true,
-    status: 'not_uploaded',
-    fileName: null,
-  },
-  {
-    id: 4,
-    type: 'cvs',
-    name: 'CVs',
-    required: true,
-    status: 'uploaded',
-    fileName: 'cvs.zip',
-    uploadedAt: '2024-05-20T10:20:00',
-  },
-  {
-    id: 5,
-    type: 'consent_forms',
-    name: 'Consent Forms',
-    required: true,
-    status: 'not_uploaded',
-    fileName: null,
-  },
-  {
-    id: 6,
-    type: 'national_id',
-    name: 'National ID / NIN',
-    required: true,
-    status: 'uploaded',
-    fileName: 'national_id.pdf',
-    uploadedAt: '2024-05-18T14:30:00',
-  },
-  {
-    id: 7,
-    type: 'confirmation_letter',
-    name: 'Confirmation Letter',
-    required: false,
-    status: 'not_uploaded',
-    fileName: null,
-  },
-  {
-    id: 8,
-    type: 'faculty_letter',
-    name: 'Faculty Letter / Faculty Support Evidence',
-    required: false,
-    status: 'not_uploaded',
-    fileName: null,
-  },
-  {
-    id: 9,
-    type: 'research_instruments',
-    name: 'Research Instruments',
-    required: false,
-    status: 'not_uploaded',
-    fileName: null,
-  },
-];
-
-// localStorage helper functions
-const getStoredProposals = () => {
-  try {
-    const stored = localStorage.getItem(PROPOSALS_STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-    // First time: initialize with mock data
-    localStorage.setItem(PROPOSALS_STORAGE_KEY, JSON.stringify(initialMockProposals));
-    return initialMockProposals;
-  } catch (error) {
-    console.error('Error reading proposals from localStorage:', error);
-    return initialMockProposals;
-  }
-};
-
-const saveStoredProposals = (proposals) => {
-  try {
-    localStorage.setItem(PROPOSALS_STORAGE_KEY, JSON.stringify(proposals));
-  } catch (error) {
-    console.error('Error saving proposals to localStorage:', error);
-  }
-};
-
-const getNextProposalId = () => {
-  try {
-    const stored = localStorage.getItem(NEXT_ID_STORAGE_KEY);
-    const nextId = stored ? parseInt(stored) : initialMockProposals.length + 1;
-    localStorage.setItem(NEXT_ID_STORAGE_KEY, String(nextId + 1));
-    return nextId;
-  } catch (error) {
-    return initialMockProposals.length + 1;
-  }
-};
-
-const generateProtocolNumber = () => {
-  try {
-    const stored = localStorage.getItem(NEXT_PROTOCOL_NUMBER_STORAGE_KEY);
-    const year = new Date().getFullYear();
-    const currentYear = year.toString().slice(-2); // Get last 2 digits of year
-    
-    let nextNumber = stored ? parseInt(stored) : initialMockProposals.length + 1;
-    localStorage.setItem(NEXT_PROTOCOL_NUMBER_STORAGE_KEY, String(nextNumber + 1));
-    
-    return `PR${year}${String(nextNumber).padStart(3, '0')}`;
-  } catch (error) {
-    return `PR${new Date().getFullYear()}${String(initialMockProposals.length + 1).padStart(3, '0')}`;
-  }
-};
-
-const getStoredTeamMembers = (proposalId) => {
-  try {
-    const key = `kab_team_members_${proposalId}`;
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : [];
-  } catch (error) {
-    return [];
-  }
-};
-
-const saveStoredTeamMembers = (proposalId, members) => {
-  try {
-    const key = `kab_team_members_${proposalId}`;
-    localStorage.setItem(key, JSON.stringify(members));
-  } catch (error) {
-    console.error('Error saving team members to localStorage:', error);
-  }
-};
-
-const getStoredAttachments = (proposalId) => {
-  try {
-    const key = `kab_attachments_${proposalId}`;
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-    // Return default attachment structure
-    return mockAttachments;
-  } catch (error) {
-    return mockAttachments;
-  }
-};
-
-const saveStoredAttachments = (proposalId, attachments) => {
-  try {
-    const key = `kab_attachments_${proposalId}`;
-    localStorage.setItem(key, JSON.stringify(attachments));
-  } catch (error) {
-    console.error('Error saving attachments to localStorage:', error);
-  }
-};
-
-// API Functions
-
+/**
+ * Get applicant dashboard statistics (not in official API - custom endpoint for UI).
+ * GET /api/v1/proposals/my (alternatively get stats from list)
+ * Returns proposal summary for logged-in user
+ */
 export const getApplicantDashboard = async () => {
   try {
-    // Replace with: const response = await axiosClient.get('/applicant/dashboard');
-    const proposals = getStoredProposals();
-    
+    // Get user's proposals to calculate stats
+    const proposals = await getMyProposals();
     const stats = {
       totalProposals: proposals.length,
-      draft: proposals.filter((p) => p.status === 'draft').length,
-      underReview: proposals.filter((p) => p.status === 'under_review').length,
-      approved: proposals.filter((p) => p.status === 'approved').length,
+      draft: proposals.filter((p) => p.status === 'Draft').length,
+      submitted: proposals.filter((p) => p.status === 'Submitted').length,
+      underReview: proposals.filter((p) => p.status === 'Scheduled for Review' || p.status === 'Reviewed').length,
+      approved: proposals.filter((p) => p.status === 'Approved').length,
+      rejected: proposals.filter((p) => p.status === 'Rejected').length,
+      awarded: proposals.filter((p) => p.status === 'Awarded').length,
     };
-
-    const response = await new Promise((resolve) =>
-      setTimeout(
-        () =>
-          resolve({
-            data: {
-              applicantName: 'Dr. Jane Omondi',
-              recentProposals: proposals.slice(0, 3),
-              ...stats,
-              stats,
-            },
-          }),
-        500
-      )
-    );
-    return response.data;
+    return {
+      proposals: proposals.slice(0, 5),
+      stats,
+    };
   } catch (error) {
-    throw new Error('Failed to fetch applicant dashboard');
+    console.error('Failed to fetch applicant dashboard:', error);
+    throw error;
   }
 };
 
+// ─── My Proposals ─────────────────────────────────────────────────────────────
+
+/**
+ * Get all proposals created by logged-in staff member.
+ * GET /api/v1/proposals/my
+ * Returns array of proposal summary objects
+ */
 export const getMyProposals = async () => {
-  try {
-    // Replace with: const response = await axiosClient.get('/applicant/proposals');
-    const proposals = getStoredProposals();
-    const response = await new Promise((resolve) =>
-      setTimeout(() => resolve({ data: proposals }), 500)
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error('Failed to fetch proposals');
-  }
+  const response = await axiosClient.get('/proposals/my');
+  return response.data;
 };
 
+/**
+ * Get full details of a single proposal (only own proposals for staff).
+ * GET /api/v1/proposals/{proposal_id}
+ * Returns full proposal object with all fields
+ */
 export const getProposalDetails = async (proposalId) => {
-  try {
-    // Replace with: const response = await axiosClient.get(`/applicant/proposals/${proposalId}`);
-    const numericId = parseInt(proposalId);
-    
-    // Try to find in stored proposals first (user-created proposals)
-    const storedProposals = getStoredProposals();
-    let proposal = storedProposals.find((p) => p.id === numericId || p.id === proposalId);
-    
-    // Fall back to mock proposals if not found
-    if (!proposal) {
-      proposal = mockProposals.find((p) => p.id === numericId);
-    }
-    
-    // If still not found, return a clear not-found error
-    if (!proposal) {
-      throw new Error(`Proposal ${proposalId} not found`);
-    }
-    
-    const teamMembers = getStoredTeamMembers(proposal.id);
-    const attachments = getStoredAttachments(proposal.id);
-    
-    const response = await new Promise((resolve) =>
-      setTimeout(
-        () =>
-          resolve({
-            data: {
-              ...proposal,
-              title: proposal.title || proposal.projectTitle || 'Untitled Proposal',
-              protocolNo: proposal.protocolNo || proposal.protocolNumber || `PR${new Date().getFullYear()}000`,
-              teamMembers: teamMembers || mockTeamMembers,
-              attachments: attachments || mockAttachments,
-              reviewReport: {
-                status: 'pending',
-                reviewer: null,
-                feedback: null,
-              },
-              timeline: {
-                draftCreated: proposal.createdAt || '2024-05-15T08:00:00',
-                attachmentsUploaded: null,
-                submitted: null,
-                scheduledReview: null,
-                reviewed: null,
-                decision: null,
-              },
-            },
-          }),
-        500
-      )
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error(error.message || 'Failed to fetch proposal details');
-  }
+  const response = await axiosClient.get(`/proposals/${proposalId}`);
+  return response.data;
 };
 
+// ─── Create & Update Proposals ────────────────────────────────────────────────
+
+/**
+ * Create a new proposal (draft).
+ * POST /api/v1/proposals
+ * Body: Full proposal object (see schema)
+ * Returns created proposal with id, protocol_no, status=Draft
+ */
 export const createProposalDraft = async (payload) => {
-  try {
-    // Replace with: const response = await axiosClient.post('/applicant/proposals/draft', payload);
-    const id = getNextProposalId();
-    const protocolNo = generateProtocolNumber();
-    
-    // Use projectTitle from form, or fall back to other title fields
-    const proposalTitle = payload.projectTitle || payload.title || 'Untitled Proposal';
-    
-    const newProposal = {
-      id,
-      protocolNo,
-      protocol_no: protocolNo,
-      title: proposalTitle,
-      projectTitle: proposalTitle,
-      proposal_title: proposalTitle,
-      proposal_type: payload.proposal_type || 'research',
-      status: 'draft',
-      piName: `${payload.piFirstName} ${payload.piLastName}`,
-      piFirstName: payload.piFirstName,
-      piLastName: payload.piLastName,
-      piEmail: payload.piEmail,
-      piPhone: payload.piPhone,
-      faculty: payload.faculty,
-      department: payload.department,
-      attachmentsSummary: '0/9 Uploaded',
-      attachments_summary: '0/9 Uploaded',
-      attachments_uploaded: 0,
-      attachments_total: 9,
-      team_members_count: 0,
-      membersCount: 0,
-      created_at: new Date().toISOString(),
-      createdAt: new Date().toISOString().split('T')[0],
-      updated_at: new Date().toISOString(),
-      updatedAt: new Date().toISOString().split('T')[0],
-      ...payload,
-    };
-
-    // Save to localStorage
-    const proposals = getStoredProposals();
-    proposals.push(newProposal);
-    saveStoredProposals(proposals);
-
-    // Initialize empty team members and attachments for this proposal
-    saveStoredTeamMembers(id, []);
-    saveStoredAttachments(id, mockAttachments);
-
-    const response = await new Promise((resolve) =>
-      setTimeout(() => resolve({ data: newProposal }), 500)
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error('Failed to create proposal draft');
-  }
+  const response = await axiosClient.post('/proposals', {
+    grant_type: payload.grant_type,
+    pi_first_name: payload.pi_first_name,
+    pi_last_name: payload.pi_last_name,
+    pi_qualification: payload.pi_qualification,
+    pi_gender: payload.pi_gender,
+    pi_designation: payload.pi_designation,
+    pi_faculty_id: payload.pi_faculty_id,
+    pi_department: payload.pi_department,
+    pi_research_specialization: payload.pi_research_specialization,
+    pi_email: payload.pi_email,
+    pi_phone: payload.pi_phone,
+    research_type: payload.research_type,
+    title: payload.title,
+    project_summary: payload.project_summary,
+    problem_statement: payload.problem_statement,
+    proposed_solution: payload.proposed_solution,
+    relevance: payload.relevance,
+    innovativeness: payload.innovativeness,
+    main_objective: payload.main_objective,
+    specific_objectives: payload.specific_objectives,
+    methods_description: payload.methods_description,
+    outcomes: payload.outcomes,
+    dissemination_plan: payload.dissemination_plan,
+    policy_impact: payload.policy_impact,
+    scalability: payload.scalability,
+    sustainability: payload.sustainability,
+    gender_considerations: payload.gender_considerations,
+    ethical_impact: payload.ethical_impact,
+    capacity_building: payload.capacity_building,
+    conflict_of_interest: payload.conflict_of_interest,
+    references: payload.references,
+    total_budget: payload.total_budget ? Number(payload.total_budget) : 0,
+  });
+  return response.data;
 };
 
+/**
+ * Update a draft proposal.
+ * PATCH /api/v1/proposals/{proposal_id}
+ * Body: Proposal fields to update (partial update)
+ * Returns updated proposal object
+ */
 export const updateProposal = async (proposalId, payload) => {
-  try {
-    // Replace with: const response = await axiosClient.put(`/applicant/proposals/${proposalId}`, payload);
-    const response = await new Promise((resolve) =>
-      setTimeout(
-        () =>
-          resolve({
-            data: {
-              id: proposalId,
-              ...payload,
-              updatedAt: new Date().toISOString(),
-            },
-          }),
-        500
-      )
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error('Failed to update proposal');
-  }
-};
+  const updateData = {};
+  
+  // Include all fields that are in the payload
+  const allowedFields = [
+    'pi_first_name', 'pi_last_name', 'pi_qualification', 'pi_gender',
+    'pi_designation', 'pi_faculty_id', 'pi_department', 'pi_research_specialization',
+    'pi_email', 'pi_phone', 'research_type', 'title', 'project_summary',
+    'problem_statement', 'proposed_solution', 'relevance', 'innovativeness',
+    'main_objective', 'specific_objectives', 'methods_description', 'outcomes',
+    'dissemination_plan', 'policy_impact', 'scalability', 'sustainability',
+    'gender_considerations', 'ethical_impact', 'capacity_building',
+    'conflict_of_interest', 'references', 'total_budget',
+  ];
 
-export const updateProposalDraft = async (proposalId, payload) => {
-  try {
-    // Replace with: const response = await axiosClient.put(`/applicant/proposals/${proposalId}`, payload);
-    const numericId = parseInt(proposalId);
-    const proposals = getStoredProposals();
-    const proposalIndex = proposals.findIndex((p) => p.id === numericId || p.id === proposalId);
-    
-    if (proposalIndex === -1) {
-      throw new Error(`Proposal ${proposalId} not found`);
+  allowedFields.forEach((field) => {
+    if (field in payload) {
+      updateData[field] = field === 'total_budget' && payload[field] 
+        ? Number(payload[field]) 
+        : payload[field];
     }
-    
-    const existingProposal = proposals[proposalIndex];
-    
-    // Update proposal, preserving critical fields
-    const updatedProposal = {
-      ...existingProposal,
-      ...payload,
-      id: existingProposal.id,
-      protocolNo: existingProposal.protocolNo,
-      protocol_no: existingProposal.protocol_no,
-      created_at: existingProposal.created_at,
-      createdAt: existingProposal.createdAt,
-      attachments_uploaded: existingProposal.attachments_uploaded,
-      attachments_total: existingProposal.attachments_total,
-      team_members_count: existingProposal.team_members_count,
-      membersCount: existingProposal.membersCount,
-      status: existingProposal.status,
-      attachmentsSummary: existingProposal.attachmentsSummary,
-      attachments_summary: existingProposal.attachments_summary,
-      updated_at: new Date().toISOString(),
-      updatedAt: new Date().toISOString().split('T')[0],
-    };
-    
-    proposals[proposalIndex] = updatedProposal;
-    saveStoredProposals(proposals);
-    
-    const response = await new Promise((resolve) =>
-      setTimeout(() => resolve({ data: updatedProposal }), 500)
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error(error.message || 'Failed to update proposal draft');
-  }
+  });
+
+  const response = await axiosClient.patch(`/proposals/${proposalId}`, updateData);
+  return response.data;
 };
 
+/**
+ * @deprecated Use updateProposal instead
+ */
+export const updateProposalDraft = updateProposal;
+
+/**
+ * Delete a draft proposal.
+ * DELETE /api/v1/proposals/{proposal_id}
+ * Only draft proposals can be deleted
+ * Returns: { message }
+ */
 export const deleteDraft = async (proposalId) => {
-  try {
-    // Replace with: await axiosClient.delete(`/applicant/proposals/${proposalId}`);
-    await new Promise((resolve) => setTimeout(() => resolve(), 500));
-    return { success: true };
-  } catch (error) {
-    throw new Error('Failed to delete draft');
-  }
+  const response = await axiosClient.delete(`/proposals/${proposalId}`);
+  return response.data;
 };
 
+// ─── Attachments ──────────────────────────────────────────────────────────────
+
+/**
+ * Get all attachments for a proposal.
+ * GET /api/v1/proposals/{proposal_id}
+ * Attachments array included in main proposal response
+ */
+export const getProposalAttachments = async (proposalId) => {
+  const proposal = await getProposalDetails(proposalId);
+  return proposal.attachments || [];
+};
+
+/**
+ * Upload a supporting document for a proposal.
+ * POST /api/v1/proposals/{proposal_id}/attachments
+ * Body (multipart/form-data): { attachment_type, file }
+ * attachment_type: "Gantt Chart"|"Budget"|"National ID"|"Confirmation Letter"|"CVs"|
+ *                  "Consent Forms"|"Research Instruments"|"Faculty Support Evidence"|"Full Proposal Document"
+ * Returns: { id, attachment_type, file_name, cloudinary_url, uploaded_at }
+ */
+export const uploadProposalAttachment = async (proposalId, attachmentType, file) => {
+  const formData = new FormData();
+  formData.append('attachment_type', attachmentType);
+  formData.append('file', file);
+
+  const response = await axiosClient.post(
+    `/proposals/${proposalId}/attachments`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } }
+  );
+  return response.data;
+};
+
+/**
+ * Delete an attachment.
+ * DELETE /api/v1/proposals/{proposal_id}/attachments/{attachment_id}
+ * Returns: { message }
+ */
+export const deleteProposalAttachment = async (proposalId, attachmentId) => {
+  // Note: API endpoint not explicitly in spec, but standard REST pattern
+  const response = await axiosClient.delete(`/proposals/${proposalId}/attachments/${attachmentId}`);
+  return response.data;
+};
+
+// ─── Team Members ─────────────────────────────────────────────────────────────
+
+/**
+ * Get all team members for a proposal.
+ * GET /api/v1/proposals/{proposal_id}
+ * Team members array included in main proposal response
+ */
+export const getProjectTeamMembers = async (proposalId) => {
+  const proposal = await getProposalDetails(proposalId);
+  return proposal.team_members || [];
+};
+
+/**
+ * Add a project team member to a proposal.
+ * POST /api/v1/proposals/{proposal_id}/team-members
+ * Body: { first_name, last_name, qualification, gender, designation, faculty_id,
+ *         department, specialization, email, phone }
+ * Returns: { id, first_name, last_name, qualification, gender, designation,
+ *            email, phone, created_at }
+ */
+export const addProjectTeamMember = async (proposalId, payload) => {
+  const response = await axiosClient.post(`/proposals/${proposalId}/team-members`, {
+    first_name: payload.first_name,
+    last_name: payload.last_name,
+    qualification: payload.qualification,
+    gender: payload.gender,
+    designation: payload.designation,
+    faculty_id: payload.faculty_id || null,
+    department: payload.department,
+    specialization: payload.specialization || null,
+    email: payload.email,
+    phone: payload.phone || null,
+  });
+  return response.data;
+};
+
+/**
+ * Remove a team member from a proposal.
+ * DELETE /api/v1/proposals/{proposal_id}/team-members/{member_id}
+ * Returns: { message }
+ */
+export const deleteProjectTeamMember = async (proposalId, memberId) => {
+  const response = await axiosClient.delete(`/proposals/${proposalId}/team-members/${memberId}`);
+  return response.data;
+};
+
+// ─── Proposal Submission ──────────────────────────────────────────────────────
+
+/**
+ * Submit a draft proposal.
+ * Note: Not explicitly in API spec - may need custom endpoint
+ * or use a status change endpoint
+ */
 export const submitProposal = async (proposalId) => {
   try {
-    // Replace with: const response = await axiosClient.post(`/applicant/proposals/${proposalId}/submit`);
-    const proposals = getStoredProposals();
-    const proposal = proposals.find((p) => p.id === proposalId);
-
-    if (!proposal) {
-      throw new Error('Proposal not found');
-    }
-
-    // Check if attachments are uploaded (for now, just set to submitted)
-    proposal.status = 'submitted';
-    proposal.updatedAt = new Date().toISOString().split('T')[0];
-
-    saveStoredProposals(proposals);
-
-    const response = await new Promise((resolve) =>
-      setTimeout(
-        () =>
-          resolve({
-            data: {
-              ...proposal,
-              submittedAt: new Date().toISOString(),
-            },
-          }),
-        500
-      )
-    );
+    // Try PATCH approach (changing status)
+    const response = await axiosClient.patch(`/proposals/${proposalId}`, {
+      status: 'Submitted',
+    });
     return response.data;
   } catch (error) {
-    throw new Error('Failed to submit proposal');
+    // If PATCH fails, proposal might auto-submit on last attachment
+    console.warn('submitProposal: Auto-submission on last attachment or use PATCH');
+    throw error;
   }
 };
 
-export const getProposalAttachments = async (proposalId) => {
-  try {
-    // Replace with: const response = await axiosClient.get(`/applicant/proposals/${proposalId}/attachments`);
-    const attachments = getStoredAttachments(proposalId);
-    const response = await new Promise((resolve) =>
-      setTimeout(() => resolve({ data: attachments }), 500)
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error('Failed to fetch attachments');
-  }
-};
+// ─── Notifications ────────────────────────────────────────────────────────────
 
-export const uploadProposalAttachment = async (proposalId, attachmentType, file) => {
-  try {
-    // Replace with FormData approach for real API:
-    // const formData = new FormData();
-    // formData.append('file', file);
-    // formData.append('type', attachmentType);
-    // const response = await axiosClient.post(`/applicant/proposals/${proposalId}/attachments`, formData);
-    
-    // Update attachment status in localStorage
-    const attachments = getStoredAttachments(proposalId);
-    const attachment = attachments.find((a) => a.type === attachmentType);
-    
-    if (attachment) {
-      attachment.status = 'uploaded';
-      attachment.fileName = file.name;
-      attachment.uploadedAt = new Date().toISOString();
-    }
-    
-    saveStoredAttachments(proposalId, attachments);
-
-    // Update proposal attachment summary
-    const proposals = getStoredProposals();
-    const proposal = proposals.find((p) => p.id === proposalId);
-    if (proposal) {
-      const uploadedCount = attachments.filter((a) => a.status === 'uploaded').length;
-      proposal.attachmentsSummary = `${uploadedCount}/9 Uploaded`;
-      saveStoredProposals(proposals);
-    }
-
-    const response = await new Promise((resolve) =>
-      setTimeout(
-        () =>
-          resolve({
-            data: {
-              id: Math.random(),
-              proposalId,
-              type: attachmentType,
-              fileName: file.name,
-              uploadedAt: new Date().toISOString(),
-            },
-          }),
-        500
-      )
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error('Failed to upload attachment');
-  }
-};
-
-export const deleteProposalAttachment = async (attachmentId) => {
-  try {
-    // Replace with: await axiosClient.delete(`/applicant/attachments/${attachmentId}`);
-    await new Promise((resolve) => setTimeout(() => resolve(), 500));
-    return { success: true };
-  } catch (error) {
-    throw new Error('Failed to delete attachment');
-  }
-};
-
-export const getProjectTeamMembers = async (proposalId) => {
-  try {
-    // Replace with: const response = await axiosClient.get(`/applicant/proposals/${proposalId}/team-members`);
-    const members = getStoredTeamMembers(proposalId);
-    const response = await new Promise((resolve) =>
-      setTimeout(() => resolve({ data: members }), 500)
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error('Failed to fetch team members');
-  }
-};
-
-export const addProjectTeamMember = async (proposalId, payload) => {
-  try {
-    // Replace with: const response = await axiosClient.post(`/applicant/proposals/${proposalId}/team-members`, payload);
-    
-    const members = getStoredTeamMembers(proposalId);
-    const newMember = {
-      id: Math.random(),
-      ...payload,
-    };
-    
-    members.push(newMember);
-    saveStoredTeamMembers(proposalId, members);
-
-    // Update proposal member count
-    const proposals = getStoredProposals();
-    const proposal = proposals.find((p) => p.id === proposalId);
-    if (proposal) {
-      proposal.membersCount = members.length;
-      saveStoredProposals(proposals);
-    }
-
-    const response = await new Promise((resolve) =>
-      setTimeout(
-        () =>
-          resolve({
-            data: newMember,
-          }),
-        500
-      )
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error('Failed to add team member');
-  }
-};
-
-export const deleteProjectTeamMember = async (proposalId, memberId) => {
-  try {
-    // Replace with: await axiosClient.delete(`/applicant/proposals/${proposalId}/team-members/${memberId}`);
-    const members = getStoredTeamMembers(proposalId);
-    const filteredMembers = members.filter((m) => m.id !== memberId);
-    saveStoredTeamMembers(proposalId, filteredMembers);
-
-    // Update proposal member count
-    const proposals = getStoredProposals();
-    const proposal = proposals.find((p) => p.id === proposalId);
-    if (proposal) {
-      proposal.membersCount = filteredMembers.length;
-      saveStoredProposals(proposals);
-    }
-
-    await new Promise((resolve) => setTimeout(() => resolve(), 500));
-    return { success: true };
-  } catch (error) {
-    throw new Error('Failed to delete team member');
-  }
-};
-
+/**
+ * Get notifications for applicant (not in official API - custom endpoint).
+ * This is a derived concept - notifications might come from proposal status changes
+ */
 export const getApplicantNotifications = async () => {
   try {
-    // Replace with: const response = await axiosClient.get('/applicant/notifications');
-    const response = await new Promise((resolve) =>
-      setTimeout(() => resolve({ data: mockNotifications }), 500)
-    );
-    return response.data;
+    const proposals = await getMyProposals();
+    // Map proposal status changes to notifications
+    return proposals.map((p) => ({
+      id: p.id,
+      type: 'proposal_status_change',
+      title: `Proposal: ${p.title}`,
+      message: `Status: ${p.status}`,
+      timestamp: p.submitted_at || p.created_at,
+    }));
   } catch (error) {
-    throw new Error('Failed to fetch notifications');
+    console.error('Failed to fetch notifications:', error);
+    return [];
   }
 };

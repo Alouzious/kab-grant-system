@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getGrantCalls } from '../../api/authApi';
+import { getGrantCalls } from "../../api/adminApi";
 import {
   Megaphone,
   CalendarDays,

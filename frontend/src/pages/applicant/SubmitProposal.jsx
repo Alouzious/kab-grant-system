@@ -8,7 +8,7 @@ import Input from '../../components/common/Input';
 import Alert from '../../components/common/Alert';
 import Loader from '../../components/common/Loader';
 import { createProposalDraft, submitProposal } from '../../api/applicantApi';
-import { getGrantCalls } from '../../api/authApi';
+import { getGrantCalls } from "../../api/adminApi";
 import { getFaculties, getDepartments, getResearchDisciplines } from '../../api/referenceApi';
 import { sexOptions, qualificationOptions, designationOptions, typeOfResearchOptions } from '../../utils/formOptions';
 import {

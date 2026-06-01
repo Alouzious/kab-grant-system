@@ -55,11 +55,14 @@ export default function Reviewers() {
   const fetchReviewers = async () => {
     try {
       setLoading(true);
-      const data = await getReviewers();
-      setReviewers(data);
       setError(null);
+      const data = await getReviewers();
+      setReviewers(data || []);
     } catch (err) {
-      setError(err.message);
+      console.error('Failed to fetch reviewers:', err);
+      const errorMsg = err.response?.data?.detail || err.message || 'Failed to load reviewers';
+      setError(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
+      setReviewers([]);
     } finally {
       setLoading(false);
     }

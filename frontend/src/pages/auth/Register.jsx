@@ -2,10 +2,36 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { registerUser } from '../../api/authApi';
 import { getFaculties, getDepartments } from '../../api/referenceApi';
-import { Eye, EyeOff, UserPlus, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, UserPlus, AlertCircle, CheckCircle2, ChevronDown } from 'lucide-react';
 
 // Gender options as expected by backend enum
 const GENDER_OPTIONS = ['Male', 'Female'];
+
+// Enhanced select styling with better color contrast
+const selectStyle = `
+  select {
+    color-scheme: light;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25rem;
+    padding-right: 2.5rem;
+  }
+  select option {
+    background-color: #ffffff;
+    color: #1F2937;
+    padding: 0.5rem;
+  }
+  select option:hover {
+    background-color: #F3F4F6;
+  }
+  select option:checked {
+    background: linear-gradient(#0078B8, #0078B8);
+    background-color: #0078B8 !important;
+    color: white !important;
+  }
+`;
 
 export default function Register() {
   const navigate = useNavigate();
@@ -101,11 +127,12 @@ export default function Register() {
   const inputClass =
     'w-full px-4 py-2.5 border border-border rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition';
   const selectClass =
-    'w-full px-4 py-2.5 border border-border rounded-lg bg-white text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition';
+    'w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg bg-white text-gray-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition cursor-pointer hover:border-gray-400';
 
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: '#F4F4F4' }}>
+        <style>{selectStyle}</style>
         <div className="text-center max-w-sm">
           <img src="/log1.jpg" alt="KAB-FIR Logo" className="h-20 w-20 rounded-xl mx-auto mb-6" />
           <div
@@ -125,6 +152,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6 py-12" style={{ backgroundColor: '#F4F4F4' }}>
+      <style>{selectStyle}</style>
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -202,12 +230,14 @@ export default function Register() {
                   <label className="block text-sm font-medium text-textMain mb-1.5">
                     Gender <span className="text-danger">*</span>
                   </label>
-                  <select name="gender" value={form.gender} onChange={handleChange} className={selectClass}>
-                    <option value="">Select gender</option>
-                    {GENDER_OPTIONS.map((g) => (
-                      <option key={g} value={g}>{g}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select name="gender" value={form.gender} onChange={handleChange} className={selectClass}>
+                      <option value="">Select gender</option>
+                      {GENDER_OPTIONS.map((g) => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-textMain mb-1.5">
@@ -250,29 +280,33 @@ export default function Register() {
                   <label className="block text-sm font-medium text-textMain mb-1.5">
                     Faculty <span className="text-danger">*</span>
                   </label>
-                  <select name="faculty_id" value={form.faculty_id} onChange={handleChange} className={selectClass}>
-                    <option value="">Select faculty</option>
-                    {faculties.map((f) => (
-                      <option key={f.id} value={f.id}>{f.name}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select name="faculty_id" value={form.faculty_id} onChange={handleChange} className={selectClass}>
+                      <option value="">Select faculty</option>
+                      {faculties.map((f) => (
+                        <option key={f.id} value={f.id}>{f.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-textMain mb-1.5">
                     Department <span className="text-danger">*</span>
                   </label>
-                  <select
-                    name="department_id"
-                    value={form.department_id}
-                    onChange={handleChange}
-                    disabled={!form.faculty_id}
-                    className={selectClass + ' disabled:opacity-50'}
-                  >
-                    <option value="">Select department</option>
-                    {departments.map((d) => (
-                      <option key={d.id} value={d.id}>{d.name}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      name="department_id"
+                      value={form.department_id}
+                      onChange={handleChange}
+                      disabled={!form.faculty_id}
+                      className={selectClass + (form.faculty_id ? '' : ' opacity-60 bg-gray-50 cursor-not-allowed border-gray-200')}
+                    >
+                      <option value="">{form.faculty_id ? 'Select department' : 'Select faculty first'}</option>
+                      {departments.map((d) => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>

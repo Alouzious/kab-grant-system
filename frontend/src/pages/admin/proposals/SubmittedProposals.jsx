@@ -35,16 +35,21 @@ export default function SubmittedProposals() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
         const proposalsData = await getSubmittedProposals();
-        setProposals(proposalsData);
+        setProposals(proposalsData || []);
         
         // Only fetch reviewers if user has permission to assign them
         if (canAssign) {
           const reviewersData = await getReviewers();
-          setReviewers(reviewersData);
+          setReviewers(reviewersData || []);
         }
       } catch (err) {
-        setError(err.message);
+        console.error('Failed to fetch submitted proposals:', err);
+        const errorMsg = err.response?.data?.detail || err.message || 'Failed to load proposals';
+        setError(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
+        setProposals([]);
+        setReviewers([]);
       } finally {
         setLoading(false);
       }

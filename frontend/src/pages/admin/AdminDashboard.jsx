@@ -82,12 +82,37 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     getAdminDashboard()
-      .then(setStats)
-      .catch((err) => setError(err.message))
+      .then((data) => {
+        console.log('Dashboard stats loaded:', data);
+        setStats(data);
+      })
+      .catch((err) => {
+        console.error('Dashboard API error:', err);
+        const errorMsg = err.response?.data?.detail || err.message || 'Failed to load dashboard stats';
+        setError(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
+        setStats(null);
+      })
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <DashboardLayout role="admin"><Loader /></DashboardLayout>;
+
+  // Show error state with detailed information
+  if (error && !stats) {
+    return (
+      <DashboardLayout role={user?.role || 'admin'}>
+        <PageHeader
+          title="Admin Dashboard"
+          subtitle="KAB Fund for Innovation and Research Overview"
+        />
+        <Alert variant="danger">
+          <strong>Failed to load dashboard:</strong> {error}
+          <br/>
+          <small>Please check your connection and refresh the page.</small>
+        </Alert>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role={user?.role || 'admin'}>

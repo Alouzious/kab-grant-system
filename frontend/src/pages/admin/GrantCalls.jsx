@@ -12,7 +12,7 @@ import {
   deleteGrantCall,
   openApplicationWindow,
   closeApplicationWindow,
-} from '../../api/authApi';
+} from '../../api/adminApi';
 import {
   Plus,
   Edit2,
