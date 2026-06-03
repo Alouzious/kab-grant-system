@@ -80,10 +80,29 @@ export const deleteDepartment = async (departmentId) => {
  * GET /api/v1/general/settings
  * Public endpoint
  * Returns: { active_academic_year, submission_open, deadline_date, etc }
+ * Falls back to defaults if not found.
  */
 export const getSettings = async () => {
-  const response = await axiosClient.get('/general/settings');
-  return response.data;
+  try {
+    const response = await axiosClient.get('/general/settings');
+    return response.data;
+  } catch (error) {
+    // If settings not found (404), return defaults
+    if (error.response?.status === 404) {
+      return {
+        system_name: 'KAB Fund for Innovation and Research (KAB-FIR)',
+        system_motto: 'Supporting Innovation and Research at Kabale University',
+        address: 'Kabale University, P.O. Box 317, Kabale, Uganda',
+        email: 'innovation@kab.ac.ug',
+        phone: '+256-486-430-033',
+        active_academic_year: 2026,
+        submission_deadline: '2026-12-31',
+        is_accepting_applications: true,
+      };
+    }
+    // For other errors, rethrow
+    throw error;
+  }
 };
 
 /**

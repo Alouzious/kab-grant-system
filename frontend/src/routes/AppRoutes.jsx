@@ -37,6 +37,7 @@ const ProposalDetails = lazy(() => import('../pages/applicant/ProposalDetails'))
 const UploadDocuments = lazy(() => import('../pages/applicant/UploadDocuments'));
 const ProjectTeamMembers = lazy(() => import('../pages/applicant/ProjectTeamMembers'));
 const ApplicantNotifications = lazy(() => import('../pages/applicant/Notifications'));
+const ApplicantSettings = lazy(() => import('../pages/applicant/Settings'));
 
 // ─── LAZY LOAD: Admin pages ───────────────────────────────────────────────
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard'));
@@ -142,6 +143,16 @@ export default function AppRoutes() {
       <Route path="/applicant/notifications" element={
         <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.APPLICANT]}>
           <LazyWrapper component={ApplicantNotifications} role="applicant" />
+        </ProtectedRoute>
+      } />
+      <Route path="/applicant/settings" element={
+        <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.APPLICANT]}>
+          <LazyWrapper component={ApplicantSettings} role="applicant" />
+        </ProtectedRoute>
+      } />
+      <Route path="/applicant/change-password" element={
+        <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.APPLICANT]}>
+          <ChangePassword />
         </ProtectedRoute>
       } />
 

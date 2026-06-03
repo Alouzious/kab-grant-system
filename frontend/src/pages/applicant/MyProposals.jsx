@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronUp, FileText, Users, Upload, Edit, Trash2, Send, Eye } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/common/Card';
@@ -16,6 +17,18 @@ export default function MyProposals() {
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
   const [actionSuccess, setActionSuccess] = useState(null);
+  const [expandedAttachments, setExpandedAttachments] = useState({});
+
+  // Required attachments with file format and size info
+  const REQUIRED_ATTACHMENTS = [
+    { id: 'ganttChart', label: 'a) Gantt Chart', formats: ['.pdf', '.xlsx', '.xls'], maxSize: 5 * 1024 * 1024 },
+    { id: 'budget', label: 'b) Budget (using the provided Budget Template)', formats: ['.xlsx', '.xls'], maxSize: 10 * 1024 * 1024 },
+    { id: 'nationalId', label: 'c) Copy of Lead Applicant\'s National ID', formats: ['.pdf', '.jpg', '.jpeg', '.png'], maxSize: 5 * 1024 * 1024 },
+    { id: 'letterOfConfirmation', label: 'd) Letter of confirmation / contract / latest promotion', formats: ['.pdf'], maxSize: 5 * 1024 * 1024 },
+    { id: 'teamCVs', label: 'e) Abridged CVs of key team members', formats: ['.pdf'], maxSize: 10 * 1024 * 1024 },
+    { id: 'consentForms', label: 'f) Consent forms for project participants', formats: ['.pdf'], maxSize: 10 * 1024 * 1024 },
+    { id: 'researchInstruments', label: 'g) Research instruments / tools', formats: ['.pdf', '.docx', '.doc'], maxSize: 15 * 1024 * 1024 },
+  ];
 
   useEffect(() => {
     const fetchProposals = async () => {
@@ -106,6 +119,27 @@ export default function MyProposals() {
     return labels[proposalType] || proposalType;
   };
 
+  const toggleAttachmentsExpand = (proposalId) => {
+    setExpandedAttachments((prev) => ({
+      ...prev,
+      [proposalId]: !prev[proposalId],
+    }));
+  };
+
+  const getMissingAttachments = (proposal) => {
+    if (!proposal.attachments) return REQUIRED_ATTACHMENTS;
+    const uploadedIds = proposal.attachments.map(att => att.id || att.type);
+    return REQUIRED_ATTACHMENTS.filter(att => !uploadedIds.includes(att.id));
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
   if (loading) return <Loader />;
 
   return (
@@ -124,124 +158,170 @@ export default function MyProposals() {
             <p className="text-muted mb-4">No proposals found.</p>
           </div>
         ) : (
-          <div className="w-full overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 font-semibold text-textMain">Protocol No</th>
-                  <th className="text-left py-3 px-4 font-semibold text-textMain">Proposal Title</th>
-                  <th className="text-left py-3 px-4 font-semibold text-textMain">Type</th>
-                  <th className="text-left py-3 px-4 font-semibold text-textMain">Uploaded</th>
-                  <th className="text-left py-3 px-4 font-semibold text-textMain">Status</th>
-                  <th className="text-left py-3 px-4 font-semibold text-textMain">Members</th>
-                  <th className="text-left py-3 px-4 font-semibold text-textMain">Review</th>
-                  <th className="text-left py-3 px-4 font-semibold text-textMain">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {proposals.map((proposal) => (
-                  <tr key={proposal.id} className="border-b border-border hover:bg-background">
-                    <td className="py-3 px-4 text-textMain font-medium">{proposal.protocolNo}</td>
-                    <td className="py-3 px-4 text-textMain">{proposal.title}</td>
-                    <td className="py-3 px-4">
-                      {proposal.proposal_type && (
-                        <Badge variant={getProposalTypeBadge(proposal.proposal_type)}>
-                          {getProposalTypeLabel(proposal.proposal_type)}
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-muted">{proposal.attachmentsSummary}</td>
-                    <td className="py-3 px-4">
-                      <Badge variant={getStatusBadge(proposal.status)}>
-                        {getStatusLabel(proposal.status)}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4 text-textMain">{proposal.membersCount}</td>
-                    <td className="py-3 px-4 text-muted">-</td>
-                    <td className="py-3 px-4">
-                      <div className="space-y-2">
-                        {/* Primary Action Button */}
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => navigate(`/applicant/proposals/${proposal.id}`)}
-                            disabled={actionLoading === proposal.id}
-                            className="flex-1"
-                          >
-                            Details
-                          </Button>
-                        </div>
-
-                        {/* Draft Actions */}
-                        {proposal.status === 'draft' && (
-                          <>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => {
-                                  const editPath = proposal.proposal_type === 'research'
-                                    ? `/applicant/proposals/${proposal.id}/edit/research`
-                                    : `/applicant/proposals/${proposal.id}/edit/innovation`;
-                                  navigate(editPath);
-                                }}
-                                disabled={actionLoading === proposal.id}
-                                className="flex-1"
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="accent"
-                                onClick={() => navigate(`/applicant/proposals/${proposal.id}/documents`)}
-                                disabled={actionLoading === proposal.id}
-                                className="flex-1"
-                              >
-                                Upload
-                              </Button>
+          <div className="w-full space-y-2">
+            {proposals.map((proposal) => {
+              const isExpanded = expandedAttachments[proposal.id];
+              const missingAttachments = getMissingAttachments(proposal);
+              const uploadedAttachments = proposal.attachments || [];
+              
+              return (
+                <div key={proposal.id} className="border border-border rounded-lg overflow-hidden">
+                  {/* Main Row */}
+                  <div className="hover:bg-background transition">
+                    <table className="w-full text-sm">
+                      <tbody>
+                        <tr className="border-b border-border">
+                          <td className="py-4 px-4 font-semibold text-textMain">{proposal.protocolNo}</td>
+                          <td className="py-4 px-4 text-textMain">{proposal.title}</td>
+                          {/* Upload Attachments Column - Expandable Button */}
+                          <td className="py-4 px-4">
+                            <button
+                              onClick={() => toggleAttachmentsExpand(proposal.id)}
+                              className={`px-4 py-2 rounded font-semibold text-white text-sm flex items-center gap-2 transition ${
+                                missingAttachments.length > 0
+                                  ? 'bg-warning hover:bg-opacity-90'
+                                  : 'bg-success hover:bg-opacity-90'
+                              }`}
+                            >
+                              <FileText size={16} />
+                              {missingAttachments.length > 0
+                                ? `Upload (${missingAttachments.length} missing)`
+                                : 'All Uploaded'}
+                              {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+                          </td>
+                          <td className="py-4 px-4">
+                            <Badge variant={getStatusBadge(proposal.status)}>
+                              {getStatusLabel(proposal.status)}
+                              {missingAttachments.length > 0 && ` (${missingAttachments.length} files)`}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4 text-textMain">
+                            <div className="flex items-center gap-2">
+                              <Users size={16} className="text-muted" />
+                              {proposal.membersCount || 0}
                             </div>
-
+                          </td>
+                          <td className="py-4 px-4">
+                            {proposal.reviewReport ? (
+                              <Badge variant="info">Available</Badge>
+                            ) : (
+                              <span className="text-muted text-xs">-</span>
+                            )}
+                          </td>
+                          {/* Action Column */}
+                          <td className="py-4 px-4">
                             <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="primary"
-                                onClick={() => navigate(`/applicant/proposals/${proposal.id}/team-members`)}
-                                disabled={actionLoading === proposal.id}
-                                className="flex-1"
-                              >
-                                Members
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="success"
-                                onClick={() => handleSubmit(proposal.id)}
-                                disabled={actionLoading === proposal.id}
-                                className="flex-1"
-                              >
-                                {actionLoading === proposal.id ? 'Submitting...' : 'Submit'}
-                              </Button>
+                              {proposal.status === 'draft' && (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      const editPath = proposal.proposal_type === 'research'
+                                        ? `/applicant/proposals/${proposal.id}/edit/research`
+                                        : `/applicant/proposals/${proposal.id}/edit/innovation`;
+                                      navigate(editPath);
+                                    }}
+                                    disabled={actionLoading === proposal.id}
+                                    className="p-2 hover:bg-accent hover:text-white rounded transition disabled:opacity-50"
+                                    title="Edit Proposal"
+                                  >
+                                    <Edit size={18} />
+                                  </button>
+                                  <button
+                                    onClick={() => navigate(`/applicant/proposals/${proposal.id}/team-members`)}
+                                    disabled={actionLoading === proposal.id}
+                                    className="p-2 hover:bg-accent hover:text-white rounded transition disabled:opacity-50"
+                                    title="Manage Team Members"
+                                  >
+                                    <Users size={18} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleSubmit(proposal.id)}
+                                    disabled={actionLoading === proposal.id || missingAttachments.length > 0}
+                                    className="p-2 hover:bg-success hover:text-white rounded transition disabled:opacity-50"
+                                    title={missingAttachments.length > 0 ? 'Complete attachments before submitting' : 'Submit Proposal'}
+                                  >
+                                    <Send size={18} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(proposal.id)}
+                                    disabled={actionLoading === proposal.id}
+                                    className="p-2 hover:bg-danger hover:text-white rounded transition disabled:opacity-50"
+                                    title="Delete Draft"
+                                  >
+                                    <Trash2 size={18} />
+                                  </button>
+                                </>
+                              )}
+                              {proposal.status !== 'draft' && (
+                                <button
+                                  onClick={() => navigate(`/applicant/proposals/${proposal.id}`)}
+                                  disabled={actionLoading === proposal.id}
+                                  className="p-2 hover:bg-accent hover:text-white rounded transition disabled:opacity-50"
+                                  title="View Details"
+                                >
+                                  <Eye size={18} />
+                                </button>
+                              )}
                             </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
 
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="danger"
-                                onClick={() => handleDelete(proposal.id)}
-                                disabled={actionLoading === proposal.id}
-                                className="flex-1"
-                              >
-                                {actionLoading === proposal.id ? 'Deleting...' : 'Delete'}
-                              </Button>
-                            </div>
-                          </>
-                        )}
+                  {/* Expandable Attachments Section */}
+                  {isExpanded && (
+                    <div className="bg-background border-t border-border p-4">
+                      <h4 className="font-semibold text-textMain mb-4">📎 Attachments Required</h4>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-border">
+                              <th className="text-left py-2 px-3 font-semibold text-textMain">Item</th>
+                              <th className="text-left py-2 px-3 font-semibold text-textMain">Attachment</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {REQUIRED_ATTACHMENTS.map((required) => {
+                              const uploaded = uploadedAttachments.find(att => (att.id || att.type) === required.id);
+                              
+                              return (
+                                <tr key={required.id} className="border-b border-border hover:bg-gray-50">
+                                  <td className="py-3 px-3 text-textMain">{required.label}</td>
+                                  <td className="py-3 px-3">
+                                    {uploaded ? (
+                                      <a
+                                        href={uploaded.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-accent hover:underline font-semibold flex items-center gap-1 w-fit"
+                                        title={`Download ${uploaded.name}`}
+                                      >
+                                        <FileText size={14} />
+                                        {uploaded.name}
+                                      </a>
+                                    ) : (
+                                      <button
+                                        onClick={() => navigate(`/applicant/proposals/${proposal.id}/documents`)}
+                                        className="text-accent hover:underline font-semibold flex items-center gap-1"
+                                      >
+                                        <Upload size={14} />
+                                        Upload
+                                      </button>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </Card>
