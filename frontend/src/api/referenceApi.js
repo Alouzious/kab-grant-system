@@ -51,11 +51,11 @@ export async function getSystemSettings() {
   return response.data;
 }
 
-// ─── DEPRECATED/LOCAL-ONLY FUNCTIONS ──────────────────────────────────────────
+// ─── Research Disciplines ─────────────────────────────────────────────────────
 
 /**
  * Research disciplines for proposal forms
- * These are static options not exposed by backend API
+ * Static options not exposed by backend API
  */
 export async function getResearchDisciplines() {
   return [
@@ -70,9 +70,11 @@ export async function getResearchDisciplines() {
   ];
 }
 
+// ─── Innovation Specializations ───────────────────────────────────────────────
+
 /**
  * Innovation specializations for proposal forms
- * These are static options not exposed by backend API
+ * Static options not exposed by backend API
  */
 export async function getInnovationSpecializations() {
   return [
@@ -87,23 +89,24 @@ export async function getInnovationSpecializations() {
   ];
 }
 
+// ─── Grant Calls ──────────────────────────────────────────────────────────────
+
 /**
- * Get all available grant calls for applicants to choose from
+ * Get all Open grant calls for proposal forms.
  * GET /api/v1/admin/grant-calls
- * Applicants see only OPEN grant calls
+ * Filters to only Open calls.
+ * Returns: { id, value, label } — ready for dropdown rendering
  */
 export async function getGrantCalls() {
   try {
     const response = await axiosClient.get('/admin/grant-calls');
-    return response.data.map((call) => ({
-      id: call.id,
-      name: call.title,
-      value: call.id,
-      description: call.description,
-      opening_date: call.opening_date,
-      closing_date: call.closing_date,
-      status: call.status,
-    }));
+    return response.data
+      .filter((call) => call.status === 'Open')
+      .map((call) => ({
+        id: call.id,
+        value: call.id,
+        label: `${call.title} (Closes: ${call.closing_date})`,
+      }));
   } catch (error) {
     console.warn('getGrantCalls: Failed to fetch grant calls', error);
     return [];
