@@ -42,7 +42,8 @@ export const getApplicantDashboard = async () => {
  */
 export const getAvailableGrantCalls = async () => {
   const response = await axiosClient.get('/admin/grant-calls');
-  return response.data;
+  const calls = Array.isArray(response.data) ? response.data : [];
+  return calls.filter((call) => call.status === 'Open');
 };
 
 /**
@@ -153,11 +154,6 @@ export const uploadProposalAttachment = async (proposalId, attachmentType, file)
   return response.data;
 };
 
-/** Backend has no DELETE attachment route — re-upload replaces same type. */
-export const deleteProposalAttachment = async () => {
-  throw new Error('Attachments cannot be deleted. Upload a new file to replace the existing one.');
-};
-
 /** All attachment types required by backend for auto-submission. */
 export const REQUIRED_ATTACHMENT_TYPES = attachmentTypeOptions.map((o) => o.value);
 
@@ -197,30 +193,6 @@ export const addProjectTeamMember = async (proposalId, payload, mapperOptions = 
 export const deleteProjectTeamMember = async (proposalId, memberId) => {
   const response = await axiosClient.delete(`/proposals/${proposalId}/team-members/${memberId}`);
   return response.data;
-};
-
-// ─── Proposal Submission ──────────────────────────────────────────────────────
-
-/**
- * Proposals auto-submit when all 9 attachment types are uploaded.
- * This helper verifies readiness and returns the latest proposal state.
- */
-export const submitProposal = async (proposalId) => {
-  const proposal = await getProposalDetails(proposalId);
-  const uploadedTypes = new Set((proposal.attachments || []).map((a) => a.attachment_type));
-  const missing = REQUIRED_ATTACHMENT_TYPES.filter((t) => !uploadedTypes.has(t));
-  if (missing.length > 0) {
-    throw new Error(
-      `Upload all required documents before submitting. Missing: ${missing.join(', ')}`
-    );
-  }
-  if (proposal.status === 'Submitted') return proposal;
-  if (proposal.status === 'Draft' || proposal.status === 'Missing Attachments') {
-    throw new Error(
-      'All documents appear uploaded but status has not updated yet. Refresh the page or re-upload the last file.'
-    );
-  }
-  return proposal;
 };
 
 // ─── Notifications ────────────────────────────────────────────────────────────

@@ -12,6 +12,12 @@ import { createProposalDraft, updateProposalDraft, getProposalDetails } from '..
 import { getFaculties, getDepartments, getResearchDisciplines, getGrantCalls } from '../../api/referenceApi';
 import { mapApiToResearchForm } from '../../utils/proposalMapper';
 import { getApiError } from '../../utils/apiError';
+import {
+  validateUploadFile,
+  UPLOAD_ACCEPT_ATTR,
+  MAX_UPLOAD_BYTES,
+  ALLOWED_UPLOAD_EXTENSIONS,
+} from '../../utils/fileUploadUtils';
 import { sexOptions, qualificationOptions, designationOptions, typeOfResearchOptions } from '../../utils/formOptions';
 import { createAutosaveManager } from '../../utils/autosave';
 import {
@@ -365,71 +371,18 @@ export default function ResearchProposalForm({ isEdit = false }) {
       newErrors.totalBudget = validateBudget(formData.totalBudget);
     }
 
-    // File validation
+    // Attachments are uploaded on the documents page after saving the draft.
     if (isSubmitting) {
-      if (!formData.ganttChart) {
-        newErrors.ganttChart = 'Gantt Chart is required';
-      } else if (formData.ganttChart.size > 5 * 1024 * 1024) {
-        newErrors.ganttChart = 'Gantt Chart must be less than 5MB';
-      } else if (!['.pdf', '.xlsx', '.xls'].some(ext => formData.ganttChart.name.toLowerCase().endsWith(ext))) {
-        newErrors.ganttChart = 'Gantt Chart must be PDF or Excel format';
-      }
-
-      if (!formData.budgetFile) {
-        newErrors.budgetFile = 'Budget file is required';
-      } else if (formData.budgetFile.size > 10 * 1024 * 1024) {
-        newErrors.budgetFile = 'Budget file must be less than 10MB';
-      } else if (!['.xls', '.xlsx'].some(ext => formData.budgetFile.name.toLowerCase().endsWith(ext))) {
-        newErrors.budgetFile = 'Budget file must be Excel format (.xls or .xlsx)';
-      }
-
-      if (!formData.nationalIdCopy) {
-        newErrors.nationalIdCopy = 'National ID copy is required';
-      } else if (formData.nationalIdCopy.size > 5 * 1024 * 1024) {
-        newErrors.nationalIdCopy = 'National ID copy must be less than 5MB';
-      } else if (!['.pdf', '.jpg', '.jpeg', '.png'].some(ext => formData.nationalIdCopy.name.toLowerCase().endsWith(ext))) {
-        newErrors.nationalIdCopy = 'National ID copy must be PDF or Image format';
-      }
-
-      if (!formData.letterOfConfirmation) {
-        newErrors.letterOfConfirmation = 'Letter of confirmation is required';
-      } else if (formData.letterOfConfirmation.size > 5 * 1024 * 1024) {
-        newErrors.letterOfConfirmation = 'Letter of confirmation must be less than 5MB';
-      } else if (!formData.letterOfConfirmation.name.toLowerCase().endsWith('.pdf')) {
-        newErrors.letterOfConfirmation = 'Letter of confirmation must be PDF format';
-      }
-
-      if (!formData.teamCVs) {
-        newErrors.teamCVs = 'Team CVs are required';
-      } else if (formData.teamCVs.size > 10 * 1024 * 1024) {
-        newErrors.teamCVs = 'Team CVs must be less than 10MB';
-      } else if (!formData.teamCVs.name.toLowerCase().endsWith('.pdf')) {
-        newErrors.teamCVs = 'Team CVs must be PDF format';
-      }
-
-      if (!formData.consentForms) {
-        newErrors.consentForms = 'Consent forms are required';
-      } else if (formData.consentForms.size > 10 * 1024 * 1024) {
-        newErrors.consentForms = 'Consent forms must be less than 10MB';
-      } else if (!formData.consentForms.name.toLowerCase().endsWith('.pdf')) {
-        newErrors.consentForms = 'Consent forms must be PDF format';
-      }
-
-      if (!formData.researchInstruments) {
-        newErrors.researchInstruments = 'Research instruments/tools are required';
-      } else if (formData.researchInstruments.size > 15 * 1024 * 1024) {
-        newErrors.researchInstruments = 'Research instruments must be less than 15MB';
-      } else if (!['.pdf', '.docx', '.doc'].some(ext => formData.researchInstruments.name.toLowerCase().endsWith(ext))) {
-        newErrors.researchInstruments = 'Research instruments must be PDF or DOCX format';
-      }
-
-      if (!formData.conceptPaperFile) {
-        newErrors.conceptPaperFile = 'Concept paper is required';
-      } else if (formData.conceptPaperFile.size > 15 * 1024 * 1024) {
-        newErrors.conceptPaperFile = 'Concept paper must be less than 15MB';
-      } else if (!['.pdf', '.docx', '.doc'].some(ext => formData.conceptPaperFile.name.toLowerCase().endsWith(ext))) {
-        newErrors.conceptPaperFile = 'Concept paper must be PDF or DOCX format';
-      }
+      const fileFields = [
+        'ganttChart', 'budgetFile', 'nationalIdCopy', 'letterOfConfirmation',
+        'teamCVs', 'consentForms', 'researchInstruments', 'conceptPaperFile',
+      ];
+      fileFields.forEach((field) => {
+        if (formData[field]) {
+          const fileError = validateUploadFile(formData[field]);
+          if (fileError) newErrors[field] = fileError;
+        }
+      });
     }
 
     // Compliance only for submission
@@ -683,7 +636,7 @@ export default function ResearchProposalForm({ isEdit = false }) {
             type="file"
             name={fieldName}
             onChange={handleInputChange}
-            accept={acceptedFormats.join(',')}
+            accept={UPLOAD_ACCEPT_ATTR}
             className="w-full cursor-pointer"
           />
         </div>
@@ -776,16 +729,18 @@ export default function ResearchProposalForm({ isEdit = false }) {
         {/* Section C: Attachments */}
         <Card title="C. Attachments">
           <div className="space-y-4">
-            <p className="text-sm text-muted mb-4">Please upload all required documents for your research proposal.</p>
+            <p className="text-sm text-muted mb-4">
+              Upload all required documents on the documents page after saving this draft (PDF or Word, max 10MB each).
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderFileInput('ganttChart', 'a) Gantt Chart*', ['.pdf', '.xlsx', '.xls'], 5 * 1024 * 1024)}
-              {renderFileInput('budgetFile', 'b) Budget File (Excel)*', ['.xlsx', '.xls'], 10 * 1024 * 1024)}
-              {renderFileInput('nationalIdCopy', 'c) National ID Copy*', ['.pdf', '.jpg', '.jpeg', '.png'], 5 * 1024 * 1024)}
-              {renderFileInput('letterOfConfirmation', 'd) Letter of Confirmation*', ['.pdf'], 5 * 1024 * 1024)}
-              {renderFileInput('teamCVs', 'e) Team CVs (Abridged)*', ['.pdf'], 10 * 1024 * 1024)}
-              {renderFileInput('consentForms', 'f) Consent Forms*', ['.pdf'], 10 * 1024 * 1024)}
-              {renderFileInput('researchInstruments', 'g) Research Instruments/Tools*', ['.pdf', '.docx', '.doc'], 15 * 1024 * 1024)}
-              {renderFileInput('conceptPaperFile', 'h) Concept Paper*', ['.pdf', '.docx', '.doc'], 15 * 1024 * 1024)}
+              {renderFileInput('ganttChart', 'a) Gantt Chart (optional here)', ALLOWED_UPLOAD_EXTENSIONS, MAX_UPLOAD_BYTES)}
+              {renderFileInput('budgetFile', 'b) Budget File (optional here)', ALLOWED_UPLOAD_EXTENSIONS, MAX_UPLOAD_BYTES)}
+              {renderFileInput('nationalIdCopy', 'c) National ID Copy (optional here)', ALLOWED_UPLOAD_EXTENSIONS, MAX_UPLOAD_BYTES)}
+              {renderFileInput('letterOfConfirmation', 'd) Letter of Confirmation (optional here)', ALLOWED_UPLOAD_EXTENSIONS, MAX_UPLOAD_BYTES)}
+              {renderFileInput('teamCVs', 'e) Team CVs (optional here)', ALLOWED_UPLOAD_EXTENSIONS, MAX_UPLOAD_BYTES)}
+              {renderFileInput('consentForms', 'f) Consent Forms (optional here)', ALLOWED_UPLOAD_EXTENSIONS, MAX_UPLOAD_BYTES)}
+              {renderFileInput('researchInstruments', 'g) Research Instruments (optional here)', ALLOWED_UPLOAD_EXTENSIONS, MAX_UPLOAD_BYTES)}
+              {renderFileInput('conceptPaperFile', 'h) Concept Paper (optional here)', ALLOWED_UPLOAD_EXTENSIONS, MAX_UPLOAD_BYTES)}
             </div>
           </div>
         </Card>

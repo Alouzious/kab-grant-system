@@ -16,6 +16,7 @@ import {
 import { countUploadedRequired } from '../../utils/attachmentUtils';
 import { getApiError } from '../../utils/apiError';
 import { getStatusLabel } from '../../utils/statusUtils';
+import { validateUploadFile, UPLOAD_ACCEPT_ATTR } from '../../utils/fileUploadUtils';
 
 export default function UploadDocuments() {
   const { id: proposalId } = useParams();
@@ -55,6 +56,12 @@ export default function UploadDocuments() {
   const handleFileUpload = async (attachmentType, file) => {
     if (!file) return;
 
+    const validationError = validateUploadFile(file);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     try {
       setUploadingType(attachmentType);
       setError(null);
@@ -92,7 +99,7 @@ export default function UploadDocuments() {
       {error && <Alert variant="danger">{error}</Alert>}
       {uploadSuccess && <Alert variant="success">{uploadSuccess}</Alert>}
 
-      <Card title="Required Attachments" subtitle="All document types are required for submission">
+      <Card title="Required Attachments" subtitle="PDF or Word only (.pdf, .doc, .docx), max 10MB each — all 9 types required">
         <div className="w-full overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -134,6 +141,7 @@ export default function UploadDocuments() {
                           if (el) fileInputRefs.current[attachment.type] = el;
                         }}
                         type="file"
+                        accept={UPLOAD_ACCEPT_ATTR}
                         className="hidden"
                         onChange={(e) => {
                           handleFileUpload(attachment.type, e.target.files?.[0]);

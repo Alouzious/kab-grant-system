@@ -95,20 +95,20 @@ export const getMyReviews = async () => {
  */
 export const getReviewerDashboardStats = async () => {
   try {
-    const [assignedProposals, submittedReviews] = await Promise.all([
-      getAssignedProposals(),
+    const [assignedResponse, submittedReviews] = await Promise.all([
+      axiosClient.get('/reviewer/proposals'),
       getMyReviews(),
     ]);
 
-    const submittedProposalIds = new Set(getSubmittedProposalIds());
-    const pendingCount = (assignedProposals || []).filter(
-      (p) => !submittedProposalIds.has(p.id)
-    ).length;
+    const assignedProposals = assignedResponse.data || [];
+    const submittedCount = submittedReviews?.length || 0;
+    const totalAssigned = assignedProposals.length;
+    const pendingCount = Math.max(0, totalAssigned - submittedCount);
 
     return {
-      total_assigned: assignedProposals?.length || 0,
+      total_assigned: totalAssigned,
       pending_review: pendingCount,
-      submitted_reviews: submittedReviews?.length || 0,
+      submitted_reviews: submittedCount,
     };
   } catch (error) {
     console.error('Failed to fetch dashboard stats:', error);

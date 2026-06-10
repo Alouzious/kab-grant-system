@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, FileText, Users, Upload, Edit, Trash2, Send, Eye } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileText, Users, Upload, Edit, Trash2, Eye } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Alert from '../../components/common/Alert';
 import Loader from '../../components/common/Loader';
-import { getMyProposals, deleteDraft, submitProposal } from '../../api/applicantApi';
+import { getMyProposals, deleteDraft } from '../../api/applicantApi';
 import { getApiError } from '../../utils/apiError';
 import { isDraftLike, getStatusLabel, getStatusVariant } from '../../utils/statusUtils';
 import { attachmentTypeOptions } from '../../utils/formOptions';
@@ -63,26 +63,6 @@ export default function MyProposals() {
     }
   };
 
-  const handleSubmit = async (proposalId) => {
-    try {
-      setActionLoading(proposalId);
-      await submitProposal(proposalId);
-      const updatedProposals = await getMyProposals();
-      setProposals(updatedProposals);
-      setActionSuccess('Proposal submitted successfully');
-      setTimeout(() => setActionSuccess(null), 3000);
-    } catch (err) {
-      const message = getApiError(err, 'Failed to submit proposal');
-      if (message.includes('Missing:')) {
-        navigate(`/applicant/proposals/${proposalId}/documents`);
-      } else {
-        setError(message);
-      }
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
   const toggleAttachmentsExpand = (proposalId) => {
     setExpandedAttachments((prev) => ({
       ...prev,
@@ -101,6 +81,10 @@ export default function MyProposals() {
 
       {error && <Alert variant="danger">{error}</Alert>}
       {actionSuccess && <Alert variant="success">{actionSuccess}</Alert>}
+
+      <Alert variant="info">
+        Proposals submit automatically once all 9 required documents are uploaded on the documents page.
+      </Alert>
 
       <Card>
         {proposals.length === 0 ? (
@@ -180,16 +164,6 @@ export default function MyProposals() {
                                   >
                                     <Upload size={18} />
                                   </button>
-                                  {missing === 0 && (
-                                    <button
-                                      onClick={() => handleSubmit(proposal.id)}
-                                      disabled={actionLoading === proposal.id}
-                                      className="p-2 hover:bg-success hover:text-white rounded transition disabled:opacity-50"
-                                      title="Confirm submission"
-                                    >
-                                      <Send size={18} />
-                                    </button>
-                                  )}
                                   <button
                                     onClick={() => handleDelete(proposal.id)}
                                     disabled={actionLoading === proposal.id}

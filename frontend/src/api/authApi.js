@@ -8,6 +8,9 @@ import axiosClient from './axiosClient';
  * Body: { first_name, surname, other_name, gender, phone, email, password, confirm_password, faculty_id, department_id }
  */
 export const registerUser = async (payload) => {
+  if (!payload.faculty_id || !payload.department_id) {
+    throw new Error('Faculty and department are required.');
+  }
   const response = await axiosClient.post('/auth/register', {
     first_name: payload.first_name,
     surname: payload.surname,
@@ -17,8 +20,8 @@ export const registerUser = async (payload) => {
     email: payload.email,
     password: payload.password,
     confirm_password: payload.confirm_password,
-    faculty_id: payload.faculty_id ? Number(payload.faculty_id) : null,
-    department_id: payload.department_id ? Number(payload.department_id) : null,
+    faculty_id: Number(payload.faculty_id),
+    department_id: Number(payload.department_id),
   });
   return response.data;
 };

@@ -14,6 +14,7 @@ import { mapApiToInnovationForm } from '../../utils/proposalMapper';
 import { getApiError } from '../../utils/apiError';
 import { createAutosaveManager } from '../../utils/autosave';
 import { countWords } from '../../utils/validations';
+import { validateUploadFile, UPLOAD_ACCEPT_ATTR, MAX_UPLOAD_BYTES } from '../../utils/fileUploadUtils';
 
 // Word count limits - EXACT FROM SPECIFICATION
 const WORD_LIMITS = {
@@ -36,22 +37,6 @@ const skillLevels = [
   { value: 'government', label: 'Government/National Level' },
   { value: 'organizational', label: 'Organizational' },
 ];
-
-// File upload constraints
-const FILE_LIMITS = {
-  budget: {
-    maxSize: 10 * 1024 * 1024, // 10MB
-    allowedTypes: ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-    allowedExtensions: ['.xls', '.xlsx'],
-    label: 'Budget File (Excel only)'
-  },
-  conceptPaper: {
-    maxSize: 15 * 1024 * 1024, // 15MB for longer documents
-    allowedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-    allowedExtensions: ['.pdf', '.docx'],
-    label: 'Concept Paper (PDF or DOCX)'
-  }
-};
 
 export default function InnovationProposalForm({ isEdit = false }) {
   const navigate = useNavigate();
@@ -189,41 +174,18 @@ export default function InnovationProposalForm({ isEdit = false }) {
     validateField('risksEthical', 'RISKS AND THEIR MITIGATION ETHICAL CONSIDERATIONS', WORD_LIMITS.risksEthical);
     validateField('ugandaEconomyContribution', 'CONTRIBUTION TO UGANDA\'S ECONOMY', WORD_LIMITS.ugandaEconomyContribution);
     
-    // File validation
-    if (!formData.budgetFile) {
-      newErrors.budgetFile = 'Budget file is required';
-    } else {
-      const budgetError = validateFile(formData.budgetFile, FILE_LIMITS.budget);
+    if (formData.budgetFile) {
+      const budgetError = validateUploadFile(formData.budgetFile);
       if (budgetError) newErrors.budgetFile = budgetError;
     }
-
-    if (!formData.conceptPaperFile) {
-      newErrors.conceptPaperFile = 'Concept paper is required';
-    } else {
-      const conceptError = validateFile(formData.conceptPaperFile, FILE_LIMITS.conceptPaper);
+    if (formData.conceptPaperFile) {
+      const conceptError = validateUploadFile(formData.conceptPaperFile);
       if (conceptError) newErrors.conceptPaperFile = conceptError;
     }
-    
+
     if (!formData.compliance) newErrors.compliance = 'You must accept the compliance agreement';
 
     return newErrors;
-  };
-
-  const validateFile = (file, limits) => {
-    if (!file) return null;
-
-    // Check file size
-    if (file.size > limits.maxSize) {
-      return `File size exceeds ${limits.maxSize / (1024 * 1024)}MB limit`;
-    }
-
-    // Check file extension
-    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-    if (!limits.allowedExtensions.includes(fileExtension)) {
-      return `Only ${limits.allowedExtensions.join(', ')} files are allowed`;
-    }
-
-    return null;
   };
 
   const getInnovationMapperOptions = async () => {
@@ -333,21 +295,21 @@ export default function InnovationProposalForm({ isEdit = false }) {
     );
   };
 
-  const FileInputField = ({ label, fieldName, accept, limits }) => {
+  const FileInputField = ({ label, fieldName }) => {
     const fileName = formData[fieldName]?.name || 'No file selected';
     return (
       <div className="mb-4">
-        <label className="block text-sm font-semibold mb-2">{label} *</label>
+        <label className="block text-sm font-semibold mb-2">{label} (optional — upload on documents page)</label>
         <div className="flex gap-2 items-center">
           <input
             type="file"
             name={fieldName}
-            accept={accept}
+            accept={UPLOAD_ACCEPT_ATTR}
             onChange={handleInputChange}
             className={`flex-1 px-3 py-2 border rounded ${errors[fieldName] ? 'border-red-500' : 'border-gray-300'}`}
           />
           <span className="text-xs text-gray-600 whitespace-nowrap">
-            Max: {limits.maxSize / (1024 * 1024)}MB
+            Max: {MAX_UPLOAD_BYTES / (1024 * 1024)}MB
           </span>
         </div>
         {formData[fieldName] && (
@@ -410,18 +372,11 @@ export default function InnovationProposalForm({ isEdit = false }) {
             <TextAreaField label="CONTRIBUTION TO UGANDA'S ECONOMY (In not more than 250 words, clearly explain the relevance of your project to the SDGs, and potential impact. Respond to specific sections of the National Development Plans (NDP IV), Sector plans, and regional visions such as the East African Community Vision 2050 and the Sustainable Development Goals. What tangible, measurable results from your project?)" fieldName="ugandaEconomyContribution" maxWords={WORD_LIMITS.ugandaEconomyContribution} placeholder="" />
           </Card>
 
-          {/* Files Summary */}
-          <Card title="Supporting Documents">
-            <div className="space-y-3">
-              <div className="p-3 bg-green-50 border border-green-200 rounded">
-                <p className="text-sm font-semibold text-green-900">✓ Budget File</p>
-                <p className="text-xs text-green-700">{formData.budgetFile?.name}</p>
-              </div>
-              <div className="p-3 bg-green-50 border border-green-200 rounded">
-                <p className="text-sm font-semibold text-green-900">✓ Concept Paper</p>
-                <p className="text-xs text-green-700">{formData.conceptPaperFile?.name}</p>
-              </div>
-            </div>
+          <Card title="Next Step">
+            <p className="text-sm text-muted">
+              After saving, upload all required documents (PDF or Word, max 10MB) on the documents page.
+              Your proposal submits automatically when all 9 attachment types are uploaded.
+            </p>
           </Card>
 
           {/* Action Buttons - MASSIVE */}
@@ -503,20 +458,12 @@ export default function InnovationProposalForm({ isEdit = false }) {
           <TextAreaField label="CONTRIBUTION TO UGANDA'S ECONOMY (In not more than 250 words, clearly explain the relevance of your project to the SDGs, and potential impact. Respond to specific sections of the National Development Plans (NDP IV), Sector plans, and regional visions such as the East African Community Vision 2050 and the Sustainable Development Goals. What tangible, measurable results from your project?)" fieldName="ugandaEconomyContribution" maxWords={WORD_LIMITS.ugandaEconomyContribution} placeholder="" />
         </Card>
 
-        {/* File Uploads */}
         <Card title="Supporting Documents">
-          <FileInputField 
-            label="Budget File"
-            fieldName="budgetFile"
-            accept=".xls,.xlsx"
-            limits={FILE_LIMITS.budget}
-          />
-          <FileInputField 
-            label="Concept Paper"
-            fieldName="conceptPaperFile"
-            accept=".pdf,.docx"
-            limits={FILE_LIMITS.conceptPaper}
-          />
+          <p className="text-sm text-muted mb-4">
+            Required files are uploaded on the documents page after saving this draft (PDF or Word, max 10MB each).
+          </p>
+          <FileInputField label="Budget File" fieldName="budgetFile" />
+          <FileInputField label="Concept Paper" fieldName="conceptPaperFile" />
         </Card>
 
         {/* Compliance */}

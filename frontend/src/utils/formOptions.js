@@ -57,13 +57,14 @@ export const proposalStatusOptions = [
 ];
 
 /**
- * Must match backend AttachmentType enum values exactly (all 9 required for auto-submit).
+ * Backend AttachmentType enum values (exact strings sent as attachment_type).
+ * Labels use user-facing names where they differ from API values.
  */
 export const attachmentTypeOptions = [
-  { value: 'Gantt Chart', label: 'Gantt Chart / Work Plan', required: true },
+  { value: 'Gantt Chart', label: 'Gantt Chart', required: true },
   { value: 'Budget', label: 'Budget', required: true },
-  { value: 'National ID', label: 'National ID / NIN', required: true },
-  { value: 'Confirmation Letter', label: 'Confirmation Letter', required: true },
+  { value: 'National ID', label: 'National ID', required: true },
+  { value: 'Confirmation Letter', label: 'Letter of Confirmation', required: true },
   { value: 'CVs', label: 'Team CVs', required: true },
   { value: 'Consent Forms', label: 'Consent Forms', required: true },
   { value: 'Research Instruments', label: 'Research Instruments', required: true },

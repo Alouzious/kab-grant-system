@@ -21,23 +21,17 @@ export function readCachedOpenGrantCalls() {
 }
 
 /**
- * Fetch open grant calls from the live API.
- * - With a Bearer token: staff see Open calls; admin/sgo see all (caller should filter).
- * - Without a token: live API returns 403 (no public grant-calls route on Render).
+ * Fetch grant calls from /admin/grant-calls.
+ * No query params — grant_type filtering is done client-side only.
  */
-export async function fetchGrantCalls({ token = null, grantType = null } = {}) {
+export async function fetchGrantCalls({ token = null } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   const authToken = token || localStorage.getItem('authToken');
   if (authToken) {
     headers.Authorization = `Bearer ${authToken}`;
   }
 
-  const url = new URL(`${API_BASE}/admin/grant-calls`);
-  if (grantType) {
-    url.searchParams.set('grant_type', grantType);
-  }
-
-  const response = await fetch(url.toString(), { headers });
+  const response = await fetch(`${API_BASE}/admin/grant-calls`, { headers });
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
@@ -49,9 +43,9 @@ export async function fetchGrantCalls({ token = null, grantType = null } = {}) {
   return Array.isArray(data) ? data : [];
 }
 
-/** Open grant calls only, shaped for dropdowns. Requires login (staff/applicant token). */
+/** Open grant calls only, shaped for dropdowns. Requires authenticated staff/applicant. */
 export async function getOpenGrantCallsForDropdown(grantType = null) {
-  const calls = await fetchGrantCalls({ grantType });
+  const calls = await fetchGrantCalls();
   return calls
     .filter((call) => call.status === 'Open')
     .filter((call) => !grantType || call.grant_type === grantType)
@@ -71,8 +65,7 @@ export async function getOpenGrantCallsForDropdown(grantType = null) {
 }
 
 /**
- * Landing page: try optional read-only token (VITE_PUBLIC_GRANT_CALLS_TOKEN),
- * otherwise unauthenticated request (403 on current Render API).
+ * Landing page: uses VITE_PUBLIC_GRANT_CALLS_TOKEN when set, else session token, else cache.
  */
 export async function getOpenGrantCallsForLanding() {
   const publicToken = import.meta.env.VITE_PUBLIC_GRANT_CALLS_TOKEN;
@@ -87,7 +80,7 @@ export async function getOpenGrantCallsForLanding() {
   } catch (error) {
     const cached = readCachedOpenGrantCalls();
     if (cached.length > 0) return cached;
-    console.warn('Landing grant calls unavailable without authentication:', error.message);
+    console.warn('Landing grant calls unavailable:', error.message);
     return [];
   }
 }

@@ -11,6 +11,7 @@ import { getAssignedProposalDetail, submitReview, cacheProposalForReview } from 
 import { getApiError } from '../../utils/apiError';
 import { useAuth } from '../../context/AuthContext';
 import { downloadFile } from '../../utils/downloadUtils';
+import { validateUploadFile, UPLOAD_ACCEPT_ATTR } from '../../utils/fileUploadUtils';
 
 const RECOMMENDATIONS = ['Approve', 'Minor Revisions', 'Major Revisions', 'Reject'];
 
@@ -40,6 +41,13 @@ export default function ReviewProposalDetail() {
     if (!form.recommendation) {
       setSubmitError('Please select a recommendation.');
       return;
+    }
+    if (form.report_file) {
+      const fileError = validateUploadFile(form.report_file);
+      if (fileError) {
+        setSubmitError(fileError);
+        return;
+      }
     }
     setSubmitting(true);
     setSubmitError('');
@@ -348,7 +356,7 @@ export default function ReviewProposalDetail() {
                         </label>
                         <input
                           type="file"
-                          accept=".pdf,.doc,.docx"
+                          accept={UPLOAD_ACCEPT_ATTR}
                           onChange={(e) => setForm((prev) => ({ ...prev, report_file: e.target.files[0] }))}
                           className="w-full text-sm text-muted file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-primary file:text-white hover:file:opacity-90 file:cursor-pointer"
                         />

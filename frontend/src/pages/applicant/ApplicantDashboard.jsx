@@ -10,7 +10,7 @@ import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
 import Loader from '../../components/common/Loader';
 import { useAuth } from '../../context/AuthContext';
-import { getApplicantDashboard, getMyProposals, deleteDraft, submitProposal } from '../../api/applicantApi';
+import { getApplicantDashboard, getMyProposals, deleteDraft } from '../../api/applicantApi';
 import { getApiError } from '../../utils/apiError';
 import { isDraftLike, getStatusLabel, getStatusVariant } from '../../utils/statusUtils';
 import {
@@ -63,27 +63,6 @@ export default function ApplicantDashboard() {
       setTimeout(() => setActionSuccess(null), 3000);
     } catch (err) {
       setError(getApiError(err, 'Failed to delete draft'));
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleSubmit = async (proposalId) => {
-    try {
-      setActionLoading(proposalId);
-      await submitProposal(proposalId);
-      // Refresh the proposals list
-      const updatedProposals = await getMyProposals();
-      setProposals(updatedProposals);
-      setActionSuccess('Proposal submitted successfully');
-      setTimeout(() => setActionSuccess(null), 3000);
-    } catch (err) {
-      const message = getApiError(err, 'Failed to submit proposal');
-      if (message.includes('Missing:')) {
-        navigate(`/applicant/proposals/${proposalId}/documents`);
-      } else {
-        setError(message);
-      }
     } finally {
       setActionLoading(null);
     }
@@ -151,7 +130,7 @@ const userFullName = user ? `${user.first_name} ${user.surname}` : 'Researcher';
               </thead>
               <tbody>
                 {proposals.map((proposal) => {
-                  const { uploaded, total } = getAttachmentSummary(proposal);
+                  const { uploaded, total, missing } = getAttachmentSummary(proposal);
                   const grantType = getGrantType(proposal);
                   return (
                   <tr key={proposal.id} className="border-b border-border hover:bg-background">
@@ -221,16 +200,17 @@ const userFullName = user ? `${user.first_name} ${user.surname}` : 'Researcher';
                               >
                                 Members
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="success"
-                                onClick={() => handleSubmit(proposal.id)}
-                                disabled={actionLoading === proposal.id}
-                                className="flex-1"
-                              >
-                                {actionLoading === proposal.id ? 'Submitting...' : 'Submit'}
-                              </Button>
                             </div>
+                            {missing > 0 && (
+                              <p className="text-xs text-muted">
+                                Upload all required documents to submit automatically.
+                              </p>
+                            )}
+                            {missing === 0 && isDraftLike(proposal.status) && (
+                              <p className="text-xs text-success">
+                                All documents uploaded — submission completes automatically.
+                              </p>
+                            )}
 
                             <div className="flex gap-2">
                               <Button
