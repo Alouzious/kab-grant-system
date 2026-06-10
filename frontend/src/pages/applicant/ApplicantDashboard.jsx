@@ -11,6 +11,15 @@ import Alert from '../../components/common/Alert';
 import Loader from '../../components/common/Loader';
 import { useAuth } from '../../context/AuthContext';
 import { getApplicantDashboard, getMyProposals, deleteDraft, submitProposal } from '../../api/applicantApi';
+import { getApiError } from '../../utils/apiError';
+import { isDraftLike, getStatusLabel, getStatusVariant } from '../../utils/statusUtils';
+import {
+  getProtocolNo,
+  getGrantType,
+  getTeamMemberCount,
+  getAttachmentSummary,
+  getEditPath,
+} from '../../utils/proposalDisplayUtils';
 
 export default function ApplicantDashboard() {
   const navigate = useNavigate();
@@ -32,7 +41,7 @@ export default function ApplicantDashboard() {
         setProposals(proposalsData);
         setError(null);
       } catch (err) {
-        setError(err.message);
+        setError(getApiError(err, 'Failed to load dashboard'));
       } finally {
         setLoading(false);
       }

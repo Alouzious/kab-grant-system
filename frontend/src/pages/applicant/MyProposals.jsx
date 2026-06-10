@@ -5,10 +5,19 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
-import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
 import Loader from '../../components/common/Loader';
 import { getMyProposals, deleteDraft, submitProposal } from '../../api/applicantApi';
+import { getApiError } from '../../utils/apiError';
+import { isDraftLike, getStatusLabel, getStatusVariant } from '../../utils/statusUtils';
+import { attachmentTypeOptions } from '../../utils/formOptions';
+import {
+  getProtocolNo,
+  getGrantType,
+  getTeamMemberCount,
+  getAttachmentSummary,
+  getEditPath,
+} from '../../utils/proposalDisplayUtils';
 
 export default function MyProposals() {
   const navigate = useNavigate();
@@ -19,17 +28,6 @@ export default function MyProposals() {
   const [actionSuccess, setActionSuccess] = useState(null);
   const [expandedAttachments, setExpandedAttachments] = useState({});
 
-  // Required attachments with file format and size info
-  const REQUIRED_ATTACHMENTS = [
-    { id: 'ganttChart', label: 'a) Gantt Chart', formats: ['.pdf', '.xlsx', '.xls'], maxSize: 5 * 1024 * 1024 },
-    { id: 'budget', label: 'b) Budget (using the provided Budget Template)', formats: ['.xlsx', '.xls'], maxSize: 10 * 1024 * 1024 },
-    { id: 'nationalId', label: 'c) Copy of Lead Applicant\'s National ID', formats: ['.pdf', '.jpg', '.jpeg', '.png'], maxSize: 5 * 1024 * 1024 },
-    { id: 'letterOfConfirmation', label: 'd) Letter of confirmation / contract / latest promotion', formats: ['.pdf'], maxSize: 5 * 1024 * 1024 },
-    { id: 'teamCVs', label: 'e) Abridged CVs of key team members', formats: ['.pdf'], maxSize: 10 * 1024 * 1024 },
-    { id: 'consentForms', label: 'f) Consent forms for project participants', formats: ['.pdf'], maxSize: 10 * 1024 * 1024 },
-    { id: 'researchInstruments', label: 'g) Research instruments / tools', formats: ['.pdf', '.docx', '.doc'], maxSize: 15 * 1024 * 1024 },
-  ];
-
   useEffect(() => {
     const fetchProposals = async () => {
       try {
@@ -38,7 +36,7 @@ export default function MyProposals() {
         setProposals(data);
         setError(null);
       } catch (err) {
-        setError(err.message);
+        setError(getApiError(err, 'Failed to load proposals'));
       } finally {
         setLoading(false);
       }
@@ -59,7 +57,7 @@ export default function MyProposals() {
       setActionSuccess('Draft deleted successfully');
       setTimeout(() => setActionSuccess(null), 3000);
     } catch (err) {
-      setError(err.message || 'Failed to delete draft');
+      setError(getApiError(err, 'Failed to delete draft'));
     } finally {
       setActionLoading(null);
     }
@@ -69,54 +67,20 @@ export default function MyProposals() {
     try {
       setActionLoading(proposalId);
       await submitProposal(proposalId);
-      // Refresh the proposals list
       const updatedProposals = await getMyProposals();
       setProposals(updatedProposals);
       setActionSuccess('Proposal submitted successfully');
       setTimeout(() => setActionSuccess(null), 3000);
     } catch (err) {
-      setError(err.message || 'Failed to submit proposal');
+      const message = getApiError(err, 'Failed to submit proposal');
+      if (message.includes('Missing:')) {
+        navigate(`/applicant/proposals/${proposalId}/documents`);
+      } else {
+        setError(message);
+      }
     } finally {
       setActionLoading(null);
     }
-  }
-
-  const getStatusBadge = (status) => {
-    const variants = {
-      draft: 'default',
-      submitted: 'info',
-      under_review: 'warning',
-      approved: 'success',
-      rejected: 'danger',
-    };
-    return variants[status] || 'default';
-  };
-
-  const getStatusLabel = (status) => {
-    const labels = {
-      draft: 'Draft',
-      submitted: 'Submitted',
-      under_review: 'Under Review',
-      approved: 'Approved',
-      rejected: 'Rejected',
-    };
-    return labels[status] || status;
-  };
-
-  const getProposalTypeBadge = (proposalType) => {
-    const variants = {
-      research: 'info',
-      innovation: 'accent',
-    };
-    return variants[proposalType] || 'default';
-  };
-
-  const getProposalTypeLabel = (proposalType) => {
-    const labels = {
-      research: 'Research',
-      innovation: 'Innovation',
-    };
-    return labels[proposalType] || proposalType;
   };
 
   const toggleAttachmentsExpand = (proposalId) => {
@@ -124,20 +88,6 @@ export default function MyProposals() {
       ...prev,
       [proposalId]: !prev[proposalId],
     }));
-  };
-
-  const getMissingAttachments = (proposal) => {
-    if (!proposal.attachments) return REQUIRED_ATTACHMENTS;
-    const uploadedIds = proposal.attachments.map(att => att.id || att.type);
-    return REQUIRED_ATTACHMENTS.filter(att => !uploadedIds.includes(att.id));
-  };
-
-  const formatFileSize = (bytes) => {
-    if (!bytes) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
   if (loading) return <Loader />;
@@ -161,66 +111,53 @@ export default function MyProposals() {
           <div className="w-full space-y-2">
             {proposals.map((proposal) => {
               const isExpanded = expandedAttachments[proposal.id];
-              const missingAttachments = getMissingAttachments(proposal);
+              const { checklist, missing } = getAttachmentSummary(proposal);
+              const missingItems = checklist.filter((a) => a.required && a.status !== 'uploaded');
               const uploadedAttachments = proposal.attachments || [];
-              
+
               return (
                 <div key={proposal.id} className="border border-border rounded-lg overflow-hidden">
-                  {/* Main Row */}
                   <div className="hover:bg-background transition">
                     <table className="w-full text-sm">
                       <tbody>
                         <tr className="border-b border-border">
-                          <td className="py-4 px-4 font-semibold text-textMain">{proposal.protocolNo}</td>
+                          <td className="py-4 px-4 font-semibold text-textMain">{getProtocolNo(proposal)}</td>
                           <td className="py-4 px-4 text-textMain">{proposal.title}</td>
-                          {/* Upload Attachments Column - Expandable Button */}
                           <td className="py-4 px-4">
                             <button
                               onClick={() => toggleAttachmentsExpand(proposal.id)}
                               className={`px-4 py-2 rounded font-semibold text-white text-sm flex items-center gap-2 transition ${
-                                missingAttachments.length > 0
+                                missing > 0
                                   ? 'bg-warning hover:bg-opacity-90'
                                   : 'bg-success hover:bg-opacity-90'
                               }`}
                             >
                               <FileText size={16} />
-                              {missingAttachments.length > 0
-                                ? `Upload (${missingAttachments.length} missing)`
-                                : 'All Uploaded'}
+                              {missing > 0 ? `Upload (${missing} missing)` : 'All Uploaded'}
                               {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                             </button>
                           </td>
                           <td className="py-4 px-4">
-                            <Badge variant={getStatusBadge(proposal.status)}>
+                            <Badge variant={getStatusVariant(proposal.status)}>
                               {getStatusLabel(proposal.status)}
-                              {missingAttachments.length > 0 && ` (${missingAttachments.length} files)`}
+                              {missing > 0 && isDraftLike(proposal.status) && ` (${missing} files)`}
                             </Badge>
                           </td>
                           <td className="py-4 px-4 text-textMain">
                             <div className="flex items-center gap-2">
                               <Users size={16} className="text-muted" />
-                              {proposal.membersCount || 0}
+                              {getTeamMemberCount(proposal)}
                             </div>
                           </td>
                           <td className="py-4 px-4">
-                            {proposal.reviewReport ? (
-                              <Badge variant="info">Available</Badge>
-                            ) : (
-                              <span className="text-muted text-xs">-</span>
-                            )}
+                            <span className="text-muted text-xs">-</span>
                           </td>
-                          {/* Action Column */}
                           <td className="py-4 px-4">
                             <div className="flex gap-2">
-                              {proposal.status === 'draft' && (
+                              {isDraftLike(proposal.status) && (
                                 <>
                                   <button
-                                    onClick={() => {
-                                      const editPath = proposal.proposal_type === 'research'
-                                        ? `/applicant/proposals/${proposal.id}/edit/research`
-                                        : `/applicant/proposals/${proposal.id}/edit/innovation`;
-                                      navigate(editPath);
-                                    }}
+                                    onClick={() => navigate(getEditPath(proposal))}
                                     disabled={actionLoading === proposal.id}
                                     className="p-2 hover:bg-accent hover:text-white rounded transition disabled:opacity-50"
                                     title="Edit Proposal"
@@ -236,13 +173,23 @@ export default function MyProposals() {
                                     <Users size={18} />
                                   </button>
                                   <button
-                                    onClick={() => handleSubmit(proposal.id)}
-                                    disabled={actionLoading === proposal.id || missingAttachments.length > 0}
+                                    onClick={() => navigate(`/applicant/proposals/${proposal.id}/documents`)}
+                                    disabled={actionLoading === proposal.id}
                                     className="p-2 hover:bg-success hover:text-white rounded transition disabled:opacity-50"
-                                    title={missingAttachments.length > 0 ? 'Complete attachments before submitting' : 'Submit Proposal'}
+                                    title={missing > 0 ? 'Upload documents' : 'Verify documents and submit'}
                                   >
-                                    <Send size={18} />
+                                    <Upload size={18} />
                                   </button>
+                                  {missing === 0 && (
+                                    <button
+                                      onClick={() => handleSubmit(proposal.id)}
+                                      disabled={actionLoading === proposal.id}
+                                      className="p-2 hover:bg-success hover:text-white rounded transition disabled:opacity-50"
+                                      title="Confirm submission"
+                                    >
+                                      <Send size={18} />
+                                    </button>
+                                  )}
                                   <button
                                     onClick={() => handleDelete(proposal.id)}
                                     disabled={actionLoading === proposal.id}
@@ -253,7 +200,7 @@ export default function MyProposals() {
                                   </button>
                                 </>
                               )}
-                              {proposal.status !== 'draft' && (
+                              {!isDraftLike(proposal.status) && (
                                 <button
                                   onClick={() => navigate(`/applicant/proposals/${proposal.id}`)}
                                   disabled={actionLoading === proposal.id}
@@ -270,10 +217,9 @@ export default function MyProposals() {
                     </table>
                   </div>
 
-                  {/* Expandable Attachments Section */}
                   {isExpanded && (
                     <div className="bg-background border-t border-border p-4">
-                      <h4 className="font-semibold text-textMain mb-4">📎 Attachments Required</h4>
+                      <h4 className="font-semibold text-textMain mb-4">Attachments Required</h4>
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                           <thead>
@@ -283,23 +229,26 @@ export default function MyProposals() {
                             </tr>
                           </thead>
                           <tbody>
-                            {REQUIRED_ATTACHMENTS.map((required) => {
-                              const uploaded = uploadedAttachments.find(att => (att.id || att.type) === required.id);
-                              
+                            {attachmentTypeOptions.map((required) => {
+                              const uploaded = uploadedAttachments.find(
+                                (att) => att.attachment_type === required.value
+                              );
+                              const item = checklist.find((c) => c.type === required.value);
+
                               return (
-                                <tr key={required.id} className="border-b border-border hover:bg-gray-50">
+                                <tr key={required.value} className="border-b border-border hover:bg-gray-50">
                                   <td className="py-3 px-3 text-textMain">{required.label}</td>
                                   <td className="py-3 px-3">
-                                    {uploaded ? (
+                                    {uploaded || item?.status === 'uploaded' ? (
                                       <a
-                                        href={uploaded.url}
+                                        href={uploaded?.cloudinary_url || item?.cloudinaryUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-accent hover:underline font-semibold flex items-center gap-1 w-fit"
-                                        title={`Download ${uploaded.name}`}
+                                        title={`Download ${uploaded?.file_name || item?.fileName}`}
                                       >
                                         <FileText size={14} />
-                                        {uploaded.name}
+                                        {uploaded?.file_name || item?.fileName}
                                       </a>
                                     ) : (
                                       <button
