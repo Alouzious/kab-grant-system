@@ -7,8 +7,10 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
 import Loader from '../../components/common/Loader';
-import { createProposalDraft, updateProposalDraft, getProposalDetails, submitProposal } from '../../api/applicantApi';
-import { getGrantCalls } from '../../api/referenceApi';
+import { createProposalDraft, updateProposalDraft, getProposalDetails } from '../../api/applicantApi';
+import { getMe } from '../../api/authApi';
+import { getGrantCalls, getDepartments } from '../../api/referenceApi';
+import { mapApiToInnovationForm } from '../../utils/proposalMapper';
 import { createAutosaveManager } from '../../utils/autosave';
 import { countWords } from '../../utils/validations';
 
@@ -97,18 +99,7 @@ export default function InnovationProposalForm({ isEdit = false }) {
           const proposal = await getProposalDetails(proposalId);
           setFormData((prev) => ({
             ...prev,
-            grantCall: proposal.grant_call_id || '',
-            projectSummary: proposal.project_summary || '',
-            problemStatement: proposal.problem_statement || '',
-            proposedSolution: proposal.proposed_solution || '',
-            strategyForResults: proposal.strategy_for_results || '',
-            novelty: proposal.novelty || '',
-            capacityBuilding: proposal.capacity_building || '',
-            skillLevel: proposal.skill_level || '',
-            sustainability: proposal.sustainability || '',
-            risksEthical: proposal.risks_ethical || '',
-            ugandaEconomyContribution: proposal.uganda_economy_contribution || '',
-            compliance: proposal.compliance || false,
+            ...mapApiToInnovationForm(proposal),
           }));
         } catch (err) {
           setError(err.message || 'Failed to load proposal');
@@ -132,6 +123,7 @@ export default function InnovationProposalForm({ isEdit = false }) {
         setGrantCalls(grantCallsData);
       } catch (err) {
         console.error('Error loading dropdown data:', err);
+        setError(err.message || 'Failed to load grant calls. Please refresh or contact the administrator.');
       } finally {
         setLoadingDropdowns(false);
       }
@@ -231,36 +223,26 @@ export default function InnovationProposalForm({ isEdit = false }) {
     return null;
   };
 
+  const getInnovationMapperOptions = async () => {
+    const userProfile = await getMe();
+    let departmentName = 'Department';
+    if (userProfile.department_id && userProfile.faculty_id) {
+      const depts = await getDepartments(userProfile.faculty_id);
+      departmentName = depts.find((d) => d.id === userProfile.department_id)?.label || departmentName;
+    }
+    return { userProfile, departmentName };
+  };
+
   const handleSaveDraft = async (e) => {
     e?.preventDefault();
     try {
       setError(null);
-      const payload = new FormData();
-      payload.append('grant_type', 'innovation');
-      payload.append('grant_call_id', formData.grantCall);
-      payload.append('project_summary', formData.projectSummary);
-      payload.append('problem_statement', formData.problemStatement);
-      payload.append('proposed_solution', formData.proposedSolution);
-      payload.append('strategy_for_results', formData.strategyForResults);
-      payload.append('novelty', formData.novelty);
-      payload.append('capacity_building', formData.capacityBuilding);
-      payload.append('skill_level', formData.skillLevel);
-      payload.append('sustainability', formData.sustainability);
-      payload.append('risks_ethical', formData.risksEthical);
-      payload.append('uganda_economy_contribution', formData.ugandaEconomyContribution);
-      
-      // Add files if they exist
-      if (formData.budgetFile) {
-        payload.append('budget_file', formData.budgetFile);
-      }
-      if (formData.conceptPaperFile) {
-        payload.append('concept_paper_file', formData.conceptPaperFile);
-      }
+      const mapperOptions = await getInnovationMapperOptions();
 
       if (isEdit && proposalId) {
-        await updateProposalDraft(proposalId, payload);
+        await updateProposalDraft(proposalId, formData, mapperOptions);
       } else {
-        await createProposalDraft(payload);
+        await createProposalDraft(formData, mapperOptions);
       }
 
       if (autosaveManagerRef.current) {
@@ -269,7 +251,7 @@ export default function InnovationProposalForm({ isEdit = false }) {
       setSuccess('Draft saved successfully!');
       setTimeout(() => setSuccess(''), 2000);
     } catch (err) {
-      setError(err.message || 'Failed to save draft');
+      setError(err.response?.data?.detail || err.message || 'Failed to save draft');
     }
   };
 
@@ -294,21 +276,26 @@ export default function InnovationProposalForm({ isEdit = false }) {
       return;
     }
 
-    // Already in preview, now submit for real
+    // Save draft then send applicant to upload documents (backend auto-submits when attachments complete)
     try {
       setSubmitting(true);
-      if (!isEdit || !proposalId) {
-        setError('Proposal must be saved as draft first');
-        return;
+      const mapperOptions = await getInnovationMapperOptions();
+      let savedId = proposalId;
+
+      if (isEdit && proposalId) {
+        await updateProposalDraft(proposalId, formData, mapperOptions);
+      } else {
+        const created = await createProposalDraft(formData, mapperOptions);
+        savedId = created.id;
       }
-      await submitProposal(proposalId);
-      setSuccess('Proposal submitted successfully!');
+
       if (autosaveManagerRef.current) {
         autosaveManagerRef.current.clear();
       }
-      setTimeout(() => navigate('/applicant/my-proposals'), 2000);
+      setSuccess('Draft saved. Upload documents to complete submission.');
+      setTimeout(() => navigate(`/applicant/proposals/${savedId}/documents`), 1500);
     } catch (err) {
-      setError(err.message || 'Failed to submit proposal');
+      setError(err.response?.data?.detail || err.message || 'Failed to save proposal');
     } finally {
       setSubmitting(false);
     }

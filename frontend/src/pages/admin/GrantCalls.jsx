@@ -15,6 +15,7 @@ import {
   openApplicationWindow,
   closeApplicationWindow,
 } from '../../api/adminApi';
+import { cacheOpenGrantCallsForLanding } from '../../api/grantCallsApi';
 
 const emptyForm = {
   title: '',
@@ -55,6 +56,7 @@ export default function GrantCalls() {
       setError(null);
       const data = await getGrantCalls();
       setCalls(data || []);
+      cacheOpenGrantCallsForLanding(data || []);
     } catch (err) {
       const errorMsg = err.response?.data?.detail || err.message || 'Failed to load grant calls';
       setError(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
@@ -132,7 +134,11 @@ export default function GrantCalls() {
           finalCall = await openApplicationWindow(created.id);
         }
 
-        setCalls((prev) => [finalCall, ...prev]);
+        setCalls((prev) => {
+          const next = [finalCall, ...prev];
+          cacheOpenGrantCallsForLanding(next);
+          return next;
+        });
         setSuccess(
           formData.openImmediately
             ? 'Grant call created and opened for applications. Applicants can now select it in their forms.'
@@ -171,7 +177,11 @@ export default function GrantCalls() {
     try {
       setActionLoading(callId);
       const updated = await openApplicationWindow(callId);
-      setCalls((prev) => prev.map((c) => (c.id === callId ? updated : c)));
+      setCalls((prev) => {
+        const next = prev.map((c) => (c.id === callId ? updated : c));
+        cacheOpenGrantCallsForLanding(next);
+        return next;
+      });
       setSuccess('Application window opened. This grant call is now visible in applicant forms.');
       setTimeout(() => setSuccess(null), 4000);
     } catch (err) {

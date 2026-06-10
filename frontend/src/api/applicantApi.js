@@ -1,4 +1,5 @@
 import axiosClient from './axiosClient';
+import { normalizeProposalPayload } from '../utils/proposalMapper';
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
@@ -82,41 +83,9 @@ export const getProposalDetails = async (proposalId) => {
  * Body: Full proposal object (see schema)
  * Returns created proposal with id, protocol_no, status=Draft
  */
-export const createProposalDraft = async (payload) => {
-  const response = await axiosClient.post('/proposals', {
-    grant_type: payload.grant_type,
-    pi_first_name: payload.pi_first_name,
-    pi_last_name: payload.pi_last_name,
-    pi_qualification: payload.pi_qualification,
-    pi_gender: payload.pi_gender,
-    pi_designation: payload.pi_designation,
-    pi_faculty_id: payload.pi_faculty_id,
-    pi_department: payload.pi_department,
-    pi_research_specialization: payload.pi_research_specialization,
-    pi_email: payload.pi_email,
-    pi_phone: payload.pi_phone,
-    research_type: payload.research_type,
-    title: payload.title,
-    project_summary: payload.project_summary,
-    problem_statement: payload.problem_statement,
-    proposed_solution: payload.proposed_solution,
-    relevance: payload.relevance,
-    innovativeness: payload.innovativeness,
-    main_objective: payload.main_objective,
-    specific_objectives: payload.specific_objectives,
-    methods_description: payload.methods_description,
-    outcomes: payload.outcomes,
-    dissemination_plan: payload.dissemination_plan,
-    policy_impact: payload.policy_impact,
-    scalability: payload.scalability,
-    sustainability: payload.sustainability,
-    gender_considerations: payload.gender_considerations,
-    ethical_impact: payload.ethical_impact,
-    capacity_building: payload.capacity_building,
-    conflict_of_interest: payload.conflict_of_interest,
-    references: payload.references,
-    total_budget: payload.total_budget ? Number(payload.total_budget) : 0,
-  });
+export const createProposalDraft = async (payload, mapperOptions = {}) => {
+  const apiPayload = normalizeProposalPayload(payload, mapperOptions);
+  const response = await axiosClient.post('/proposals', apiPayload);
   return response.data;
 };
 
@@ -126,30 +95,9 @@ export const createProposalDraft = async (payload) => {
  * Body: Proposal fields to update (partial update)
  * Returns updated proposal object
  */
-export const updateProposal = async (proposalId, payload) => {
-  const updateData = {};
-  
-  // Include all fields that are in the payload
-  const allowedFields = [
-    'pi_first_name', 'pi_last_name', 'pi_qualification', 'pi_gender',
-    'pi_designation', 'pi_faculty_id', 'pi_department', 'pi_research_specialization',
-    'pi_email', 'pi_phone', 'research_type', 'title', 'project_summary',
-    'problem_statement', 'proposed_solution', 'relevance', 'innovativeness',
-    'main_objective', 'specific_objectives', 'methods_description', 'outcomes',
-    'dissemination_plan', 'policy_impact', 'scalability', 'sustainability',
-    'gender_considerations', 'ethical_impact', 'capacity_building',
-    'conflict_of_interest', 'references', 'total_budget',
-  ];
-
-  allowedFields.forEach((field) => {
-    if (field in payload) {
-      updateData[field] = field === 'total_budget' && payload[field] 
-        ? Number(payload[field]) 
-        : payload[field];
-    }
-  });
-
-  const response = await axiosClient.patch(`/proposals/${proposalId}`, updateData);
+export const updateProposal = async (proposalId, payload, mapperOptions = {}) => {
+  const apiPayload = normalizeProposalPayload(payload, mapperOptions);
+  const response = await axiosClient.patch(`/proposals/${proposalId}`, apiPayload);
   return response.data;
 };
 

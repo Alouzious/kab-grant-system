@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getGrantCalls } from '../../api/adminApi';
+import { getOpenGrantCallsForLanding } from '../../api/grantCallsApi';
 import {
   CalendarDays,
   ArrowRight,
@@ -30,10 +30,21 @@ export default function Landing() {
   const [loadingCalls, setLoadingCalls] = useState(true);
 
   useEffect(() => {
-    getGrantCalls()
-      .then((data) => setGrantCalls(data.filter((c) => c.status === 'Open')))
-      .catch(() => setGrantCalls([]))
-      .finally(() => setLoadingCalls(false));
+    let cancelled = false;
+
+    const loadCalls = async () => {
+      try {
+        const data = await getOpenGrantCallsForLanding();
+        if (!cancelled) setGrantCalls(data);
+      } catch {
+        if (!cancelled) setGrantCalls([]);
+      } finally {
+        if (!cancelled) setLoadingCalls(false);
+      }
+    };
+
+    loadCalls();
+    return () => { cancelled = true; };
   }, []);
 
   const renderNavButtons = () => {

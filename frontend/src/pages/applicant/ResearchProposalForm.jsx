@@ -10,6 +10,7 @@ import Alert from '../../components/common/Alert';
 import Loader from '../../components/common/Loader';
 import { createProposalDraft, updateProposalDraft, getProposalDetails } from '../../api/applicantApi';
 import { getFaculties, getDepartments, getResearchDisciplines, getGrantCalls } from '../../api/referenceApi';
+import { mapApiToResearchForm } from '../../utils/proposalMapper';
 import { sexOptions, qualificationOptions, designationOptions, typeOfResearchOptions } from '../../utils/formOptions';
 import { createAutosaveManager } from '../../utils/autosave';
 import {
@@ -135,45 +136,14 @@ export default function ResearchProposalForm({ isEdit = false }) {
       const loadProposalData = async () => {
         try {
           const proposal = await getProposalDetails(proposalId);
-          // Populate form with proposal data
+          const [depts, disciplinesData] = await Promise.all([
+            proposal.pi_faculty_id ? getDepartments(proposal.pi_faculty_id) : Promise.resolve([]),
+            getResearchDisciplines(),
+          ]);
+          setDepartments(depts);
           setFormData((prev) => ({
             ...prev,
-            projectTitle: proposal.title || proposal.projectTitle || '',
-            piFirstName: proposal.piFirstName || '',
-            piLastName: proposal.piLastName || '',
-            piQualifications: proposal.piQualifications || '',
-            piQualificationsOther: proposal.piQualificationsOther || '',
-            piSex: proposal.piSex || '',
-            piDesignation: proposal.piDesignation || '',
-            piDesignationOther: proposal.piDesignationOther || '',
-            faculty: proposal.faculty || '',
-            department: proposal.department || '',
-            specialization: proposal.specialization || '',
-            piEmail: proposal.piEmail || '',
-            piPhone: proposal.piPhone || '',
-            researchType: proposal.researchType || '',
-            researchTypeOther: proposal.researchTypeOther || '',
-            grantCall: proposal.grantCall || '',
-            summary: proposal.summary || '',
-            problemStatement: proposal.problemStatement || '',
-            proposedSolution: proposal.proposedSolution || '',
-            relevance: proposal.relevance || '',
-            innovativeness: proposal.innovativeness || '',
-            mainObjective: proposal.mainObjective || '',
-            specificObjectives: proposal.specificObjectives || '',
-            methods: proposal.methods || '',
-            outcomes: proposal.outcomes || '',
-            dissemination: proposal.dissemination || '',
-            policyImpact: proposal.policyImpact || '',
-            scalability: proposal.scalability || '',
-            sustainability: proposal.sustainability || '',
-            genderConsiderations: proposal.genderConsiderations || '',
-            ethicalImpact: proposal.ethicalImpact || '',
-            capacityBuilding: proposal.capacityBuilding || '',
-            conflictOfInterest: proposal.conflictOfInterest || '',
-            references: proposal.references || '',
-            totalBudget: proposal.totalBudget || '',
-            compliance: proposal.compliance || false,
+            ...mapApiToResearchForm(proposal, { departments: depts, disciplines: disciplinesData }),
           }));
         } catch (err) {
           setError(err.message || 'Failed to load proposal');
@@ -203,8 +173,12 @@ export default function ResearchProposalForm({ isEdit = false }) {
         setFaculties(facultiesData);
         setDisciplines(disciplinesData);
         setGrantCalls(grantCallsData);
+        if (grantCallsData.length === 0) {
+          console.warn('No open grant calls returned. Admin must open a grant call before applicants can select one.');
+        }
       } catch (err) {
         console.error('Error loading dropdown data:', err);
+        setError(err.message || 'Failed to load grant calls. Please refresh or contact the administrator.');
       } finally {
         setLoadingDropdowns(false);
       }
@@ -478,40 +452,14 @@ export default function ResearchProposalForm({ isEdit = false }) {
       setLoading(true);
       setError(null);
       
-      // Create FormData if files are present
-      let submitData = formData;
-      const fileFields = ['ganttChart', 'budgetFile', 'nationalIdCopy', 'letterOfConfirmation', 'teamCVs', 'consentForms', 'researchInstruments', 'conceptPaperFile'];
-      const hasFiles = fileFields.some(field => formData[field]);
-      
-      if (hasFiles) {
-        const formDataObj = new FormData();
-        // Add all text fields
-        Object.keys(formData).forEach(key => {
-          if (!fileFields.includes(key) && formData[key] !== null && formData[key] !== undefined) {
-            formDataObj.append(key, formData[key]);
-          }
-        });
-        // Add files if present
-        fileFields.forEach(field => {
-          if (formData[field]) {
-            formDataObj.append(field, formData[field]);
-          }
-        });
-        submitData = formDataObj;
-      }
-      
-      let result;
+      const mapperOptions = { departments, disciplines };
       if (isEdit && proposalId) {
-        // Update existing proposal
-        result = await updateProposalDraft(proposalId, submitData);
-        // Clear edit autosave after successful save
+        await updateProposalDraft(proposalId, formData, mapperOptions);
         if (autosaveManagerRef.current) {
           autosaveManagerRef.current.clear();
         }
       } else {
-        // Create new proposal
-        result = await createProposalDraft(submitData);
-        // Clear create autosave after successful save
+        await createProposalDraft(formData, mapperOptions);
         if (autosaveManagerRef.current) {
           autosaveManagerRef.current.clear();
         }
@@ -549,31 +497,11 @@ export default function ResearchProposalForm({ isEdit = false }) {
         setLoading(true);
         setError(null);
         
-        // Create FormData if files are present
-        let submitData = formData;
-        const fileFields = ['ganttChart', 'budgetFile', 'nationalIdCopy', 'letterOfConfirmation', 'teamCVs', 'consentForms', 'researchInstruments', 'conceptPaperFile'];
-        const hasFiles = fileFields.some(field => formData[field]);
-        
-        if (hasFiles) {
-          const formDataObj = new FormData();
-          Object.keys(formData).forEach(key => {
-            if (!fileFields.includes(key) && formData[key] !== null && formData[key] !== undefined) {
-              formDataObj.append(key, formData[key]);
-            }
-          });
-          fileFields.forEach(field => {
-            if (formData[field]) {
-              formDataObj.append(field, formData[field]);
-            }
-          });
-          submitData = formDataObj;
-        }
-        
-        let result;
+        const mapperOptions = { departments, disciplines };
         if (isEdit && proposalId) {
-          result = await updateProposalDraft(proposalId, submitData);
+          await updateProposalDraft(proposalId, formData, mapperOptions);
         } else {
-          result = await createProposalDraft(submitData);
+          await createProposalDraft(formData, mapperOptions);
         }
         
         setSuccess(true);
