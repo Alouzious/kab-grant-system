@@ -6,7 +6,7 @@ import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
-import Loader from '../../components/common/Loader';
+import PageLoader from '../../components/common/PageLoader';
 import { createProposalDraft, updateProposalDraft, getProposalDetails } from '../../api/applicantApi';
 import { getMe } from '../../api/authApi';
 import { getGrantCalls, getDepartments } from '../../api/referenceApi';
@@ -326,7 +326,7 @@ export default function InnovationProposalForm({ isEdit = false }) {
     );
   };
 
-  if (loading || loadingDropdowns) return <Loader />;
+  if (loading || loadingDropdowns) return <PageLoader role="applicant" />;
 
   // PREVIEW MODE - Show editable overview
   if (showPreview) {

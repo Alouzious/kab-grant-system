@@ -6,7 +6,7 @@ import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
-import Loader from '../../components/common/Loader';
+import PageLoader from '../../components/common/PageLoader';
 import { getSettings } from '../../api/generalApi';
 
 export default function ApplicantSettings() {
@@ -33,7 +33,7 @@ export default function ApplicantSettings() {
     fetchSettings();
   }, []);
 
-  if (loading) return <Loader />;
+  if (loading) return <PageLoader role="applicant" />;
 
   return (
     <DashboardLayout role="applicant">

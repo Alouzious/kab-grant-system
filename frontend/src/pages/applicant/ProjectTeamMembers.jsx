@@ -7,7 +7,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Alert from '../../components/common/Alert';
-import Loader from '../../components/common/Loader';
+import PageLoader from '../../components/common/PageLoader';
 import { getProjectTeamMembers, addProjectTeamMember, deleteProjectTeamMember } from '../../api/applicantApi';
 import { getFaculties, getDepartments, getResearchDisciplines } from '../../api/referenceApi';
 import { sexOptions, qualificationOptions, designationOptions } from '../../utils/formOptions';
@@ -233,7 +233,7 @@ export default function ProjectTeamMembers() {
     }
   };
 
-  if (loading) return <Loader />;
+  if (loading) return <PageLoader role="applicant" />;
 
   const renderSelectWithOther = (fieldName, label, options, otherFieldName) => {
     return (

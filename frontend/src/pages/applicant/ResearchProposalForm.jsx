@@ -7,7 +7,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Alert from '../../components/common/Alert';
-import Loader from '../../components/common/Loader';
+import PageLoader from '../../components/common/PageLoader';
 import { createProposalDraft, updateProposalDraft, getProposalDetails } from '../../api/applicantApi';
 import { getFaculties, getDepartments, getResearchDisciplines, getGrantCalls } from '../../api/referenceApi';
 import { mapApiToResearchForm } from '../../utils/proposalMapper';
@@ -656,7 +656,7 @@ export default function ResearchProposalForm({ isEdit = false }) {
     );
   };
 
-  if (loadingDropdowns) return <Loader />;
+  if (loadingDropdowns || loading) return <PageLoader role="applicant" />;
 
   return (
     <DashboardLayout role="applicant">

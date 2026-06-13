@@ -5,7 +5,7 @@ import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
-import Loader from '../../components/common/Loader';
+import PageLoader from '../../components/common/PageLoader';
 import { getMyGrantCallInterests } from '../../api/grantInterestsApi';
 
 export default function ProposalTypeSelection() {
@@ -27,7 +27,7 @@ export default function ProposalTypeSelection() {
     load();
   }, []);
 
-  if (loading) return <Loader />;
+  if (loading) return <PageLoader role="applicant" />;
 
   if (interests.length === 0) {
     return (

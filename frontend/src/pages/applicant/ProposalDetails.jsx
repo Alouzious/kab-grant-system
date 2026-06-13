@@ -6,7 +6,7 @@ import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Alert from '../../components/common/Alert';
-import Loader from '../../components/common/Loader';
+import PageLoader from '../../components/common/PageLoader';
 import { getProposalDetails } from '../../api/applicantApi';
 import { getApiError } from '../../utils/apiError';
 import { getStatusLabel, getStatusVariant } from '../../utils/statusUtils';
@@ -51,7 +51,7 @@ export default function ProposalDetails() {
     });
   };
 
-  if (loading) return <Loader />;
+  if (loading) return <PageLoader role="applicant" />;
   if (error) return <Alert variant="danger">{error}</Alert>;
   if (!proposal) return <Alert variant="info">Proposal not found</Alert>;
 

@@ -7,7 +7,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import Alert from '../../components/common/Alert';
-import Loader from '../../components/common/Loader';
+import PageLoader from '../../components/common/PageLoader';
 import { fetchPublicGrantCalls } from '../../api/grantCallsApi';
 import {
   getMyInterestForCall,
@@ -94,7 +94,7 @@ export default function ExpressInterest() {
     }
   };
 
-  if (loading) return <Loader />;
+  if (loading) return <PageLoader role="applicant" />;
 
   return (
     <DashboardLayout role="applicant">

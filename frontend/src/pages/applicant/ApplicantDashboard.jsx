@@ -8,7 +8,7 @@ import StatCard from '../../components/common/StatCard';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
-import Loader from '../../components/common/Loader';
+import PageLoader from '../../components/common/PageLoader';
 import { useAuth } from '../../context/AuthContext';
 import { getApplicantDashboard, getMyProposals, deleteDraft } from '../../api/applicantApi';
 import { getMyGrantCallInterests } from '../../api/grantInterestsApi';
@@ -80,7 +80,7 @@ export default function ApplicantDashboard() {
     return variants[grantType] || 'default';
   };
 
-  if (loading) return <Loader />;
+  if (loading) return <PageLoader role="applicant" />;
 const userFullName = user ? `${user.first_name} ${user.surname}` : 'Researcher';
   const isFirstLogin = proposals.length === 0;
   const greeting = isFirstLogin ? `Welcome, ${userFullName}` : `Welcome back, ${userFullName}`;

@@ -5,7 +5,7 @@ import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
-import Loader from '../../components/common/Loader';
+import PageLoader from '../../components/common/PageLoader';
 import Table from '../../components/common/Table';
 import Badge from '../../components/common/Badge';
 import {
@@ -319,7 +319,7 @@ export default function GrantCalls() {
     },
   ];
 
-  if (loading) return <Loader />;
+  if (loading) return <PageLoader role="admin" />;
 
   return (
     <DashboardLayout role="admin">

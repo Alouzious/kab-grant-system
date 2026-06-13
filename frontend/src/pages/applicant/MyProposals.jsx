@@ -6,7 +6,7 @@ import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Alert from '../../components/common/Alert';
-import Loader from '../../components/common/Loader';
+import PageLoader from '../../components/common/PageLoader';
 import { getMyProposals, deleteDraft } from '../../api/applicantApi';
 import { getApiError } from '../../utils/apiError';
 import { isDraftLike, getStatusLabel, getStatusVariant } from '../../utils/statusUtils';
@@ -70,7 +70,7 @@ export default function MyProposals() {
     }));
   };
 
-  if (loading) return <Loader />;
+  if (loading) return <PageLoader role="applicant" />;
 
   return (
     <DashboardLayout role="applicant">

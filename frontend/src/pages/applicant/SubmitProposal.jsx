@@ -6,7 +6,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Alert from '../../components/common/Alert';
-import Loader from '../../components/common/Loader';
+import PageLoader from '../../components/common/PageLoader';
 import { createProposalDraft } from '../../api/applicantApi';
 import { getFaculties, getDepartments, getResearchDisciplines, getGrantCalls } from '../../api/referenceApi';
 import GrantCallDocumentsList from '../../components/grantCalls/GrantCallDocumentsList';
@@ -477,7 +477,7 @@ export default function SubmitProposal() {
     );
   };
 
-  if (loadingDropdowns) return <Loader />;
+  if (loadingDropdowns) return <PageLoader role="applicant" />;
 
   return (
     <DashboardLayout role="applicant">
