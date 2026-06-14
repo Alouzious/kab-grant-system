@@ -13,19 +13,13 @@ import {
   Heart,
 } from 'lucide-react';
 import GrantCallDocumentsList from '../../components/grantCalls/GrantCallDocumentsList';
+import { getGrantCallWindowStatus, daysUntilClosing } from '../../utils/grantCallWindowUtils';
 
-const STATUS_CONFIG = {
-  Open: { bg: 'bg-success/20', text: 'text-success', label: '✓ Open for Applications' },
-  Draft: { bg: 'bg-warning/20', text: 'text-warning', label: 'Coming Soon' },
-  Closed: { bg: 'bg-danger/20', text: 'text-danger', label: 'Closed' },
+const STATUS_BADGE = {
+  open: { bg: 'bg-success/20', text: 'text-success' },
+  upcoming: { bg: 'bg-warning/20', text: 'text-warning' },
+  closed: { bg: 'bg-danger/20', text: 'text-danger' },
 };
-
-function daysLeft(dateStr) {
-  if (!dateStr) return null;
-  const diff = Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
-  if (diff <= 0) return 'Deadline passed';
-  return `${diff} days left`;
-}
 
 export default function Landing() {
   const { isAuthenticated, user, redirectPathForRole, loading: authLoading } = useAuth();
@@ -81,6 +75,15 @@ export default function Landing() {
   };
 
   const renderInterestLink = (call) => {
+    const windowStatus = getGrantCallWindowStatus(call);
+    if (!windowStatus.canApply) {
+      return (
+        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-muted px-4 py-2 rounded-lg border border-border">
+          {windowStatus.label}
+        </span>
+      );
+    }
+
     const interestPath = `/applicant/grant-calls/${call.id}/interest`;
 
     if (authLoading) return null;
@@ -196,8 +199,9 @@ export default function Landing() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {grantCalls.map((call) => {
-              const statusCfg = STATUS_CONFIG[call.status] || STATUS_CONFIG.Draft;
-              const closing = daysLeft(call.closing_date);
+              const windowStatus = getGrantCallWindowStatus(call);
+              const badgeStyle = STATUS_BADGE[windowStatus.state] || STATUS_BADGE.closed;
+              const closing = daysUntilClosing(call.closing_date);
 
               return (
                 <div
@@ -207,8 +211,8 @@ export default function Landing() {
                   {/* Header */}
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <h3 className="font-bold text-textMain text-lg leading-snug flex-1">{call.title}</h3>
-                    <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${statusCfg.bg} ${statusCfg.text}`}>
-                      {statusCfg.label}
+                    <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${badgeStyle.bg} ${badgeStyle.text}`}>
+                      {windowStatus.label}
                     </span>
                   </div>
 

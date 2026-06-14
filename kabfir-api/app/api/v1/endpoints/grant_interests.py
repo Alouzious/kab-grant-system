@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_active_staff
 from app.models.models import GrantCall, GrantCallInterest, GrantCallStatus, User
 from app.schemas.schemas import GrantCallInterestResponse
+from app.utils.helpers import is_grant_call_accepting
 from app.utils.cloudinary import upload_pdf_file
 
 router = APIRouter(prefix="/grant-calls", tags=["Grant Call Interests"])
@@ -18,11 +19,11 @@ async def _get_open_grant_call(call_id: int, db: AsyncSession) -> GrantCall:
     call = result.scalar_one_or_none()
     if not call:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grant call not found.")
-    if call.status != GrantCallStatus.open:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Interest can only be expressed for open grant calls.",
-        )
+
+    accepting, reason = is_grant_call_accepting(call)
+    if not accepting:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=reason)
+
     return call
 
 

@@ -15,10 +15,27 @@ SAMPLE_CALL = {
 
 class TestGrantCallInterest:
 
-    async def _open_call(self, client, admin_token):
+    async def test_interest_rejected_after_closing_date(self, client, admin_token, staff_token, db):
+        payload = {
+            **SAMPLE_CALL,
+            "opening_date": "2020-01-01",
+            "closing_date": "2020-06-30",
+        }
+        call_id = await self._open_call(client, admin_token, payload=payload)
+
+        resp = await client.post(
+            f"/api/v1/grant-calls/{call_id}/interests",
+            files={"file": ("interest.pdf", b"%PDF-1.4 test", "application/pdf")},
+            headers={"Authorization": f"Bearer {staff_token}"},
+        )
+        assert resp.status_code == 400
+        assert "deadline" in resp.json()["detail"].lower()
+
+    async def _open_call(self, client, admin_token, payload=None):
+        body = payload or SAMPLE_CALL
         create = await client.post(
             "/api/v1/admin/grant-calls",
-            json=SAMPLE_CALL,
+            json=body,
             headers={"Authorization": f"Bearer {admin_token}"},
         )
         call_id = create.json()["id"]

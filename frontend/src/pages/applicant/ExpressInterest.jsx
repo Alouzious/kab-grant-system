@@ -14,6 +14,7 @@ import {
   submitGrantCallInterest,
 } from '../../api/grantInterestsApi';
 import { getApiError } from '../../utils/apiError';
+import { getGrantCallWindowStatus, daysUntilClosing } from '../../utils/grantCallWindowUtils';
 import { validatePdfUploadFile, PDF_ONLY_ACCEPT_ATTR } from '../../utils/fileUploadUtils';
 
 export default function ExpressInterest() {
@@ -38,7 +39,7 @@ export default function ExpressInterest() {
         const calls = await fetchPublicGrantCalls();
         const call = calls.find((c) => String(c.id) === String(callId));
         if (!call) {
-          setError('This grant call is not open or could not be found.');
+          setError('This grant call is closed, not yet open, or could not be found.');
           return;
         }
         setGrantCall(call);
@@ -96,6 +97,9 @@ export default function ExpressInterest() {
 
   if (loading) return <PageLoader role="applicant" />;
 
+  const windowStatus = grantCall ? getGrantCallWindowStatus(grantCall) : null;
+  const closing = grantCall ? daysUntilClosing(grantCall.closing_date) : null;
+
   return (
     <DashboardLayout role="applicant">
       <PageHeader
@@ -113,7 +117,9 @@ export default function ExpressInterest() {
               <h2 className="text-xl font-bold text-textMain">{grantCall.title}</h2>
               <p className="text-sm text-muted mt-1">{grantCall.description}</p>
             </div>
-            <Badge variant="success">Open</Badge>
+            <Badge variant={windowStatus?.canApply ? 'success' : 'danger'}>
+              {windowStatus?.label || 'Closed'}
+            </Badge>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
@@ -131,6 +137,7 @@ export default function ExpressInterest() {
             <div>
               <p className="text-muted">Closes</p>
               <p className="font-medium">{grantCall.closing_date}</p>
+              {closing && <p className="text-xs text-warning mt-0.5">{closing}</p>}
             </div>
           </div>
         </Card>
@@ -160,6 +167,18 @@ export default function ExpressInterest() {
               </div>
             </div>
           </div>
+        </Card>
+      ) : grantCall && !windowStatus?.canApply ? (
+        <Card>
+          <Alert variant="warning">
+            This grant call is no longer accepting interest submissions.
+            {grantCall.closing_date && closing === 'Deadline passed'
+              ? ` The deadline was ${grantCall.closing_date}.`
+              : ''}
+          </Alert>
+          <Button variant="outline" className="mt-4" onClick={() => navigate('/')}>
+            Back to Grant Calls
+          </Button>
         </Card>
       ) : grantCall ? (
         <Card>

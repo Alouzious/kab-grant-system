@@ -2,11 +2,12 @@ const OPEN_CALLS_CACHE_KEY = 'kab_public_open_grant_calls';
 const STATIC_GRANT_CALLS_PATH = '/open-grant-calls.json';
 
 import { resolveApiBaseUrl } from './apiBaseUrl';
+import { filterActiveGrantCalls, isGrantCallWithinWindow } from '../utils/grantCallWindowUtils';
 
 const API_BASE = resolveApiBaseUrl();
 
 export function cacheOpenGrantCallsForLanding(calls) {
-  const openCalls = (calls || []).filter((call) => call.status === 'Open');
+  const openCalls = filterActiveGrantCalls(calls);
   try {
     localStorage.setItem(OPEN_CALLS_CACHE_KEY, JSON.stringify(openCalls));
   } catch {
@@ -19,7 +20,7 @@ export function readCachedOpenGrantCalls() {
   try {
     const raw = localStorage.getItem(OPEN_CALLS_CACHE_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.filter((call) => call.status === 'Open') : [];
+    return Array.isArray(parsed) ? parsed.filter((call) => isGrantCallWithinWindow(call)) : [];
   } catch {
     return [];
   }
@@ -79,7 +80,7 @@ export async function fetchStaticOpenGrantCalls() {
     const data = await response.json();
     const list = Array.isArray(data) ? data : data?.grant_calls;
     if (!Array.isArray(list)) return [];
-    const openCalls = list.filter((call) => call.status === 'Open');
+    const openCalls = filterActiveGrantCalls(list);
     if (openCalls.length > 0) {
       cacheOpenGrantCallsForLanding(openCalls);
     }
@@ -98,7 +99,7 @@ export function mapGrantCallsToDropdownOptions(calls, grantType = null) {
   const typeFilter = grantType ? normalizeGrantType(grantType) : null;
 
   return (calls || [])
-    .filter((call) => call.status === 'Open')
+    .filter((call) => isGrantCallWithinWindow(call))
     .filter((call) => !typeFilter || normalizeGrantType(call.grant_type) === typeFilter)
     .map((call) => ({
       ...call,

@@ -4,8 +4,6 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from typing import List
 from datetime import date
-
-from app.core.database import get_db
 from app.core.deps import get_current_admin, get_current_user
 from app.models.models import GrantCall, GrantCallStatus, GrantCallInterest, User
 from app.schemas.schemas import (
@@ -38,7 +36,10 @@ async def list_grant_calls(
     query = select(GrantCall).order_by(GrantCall.created_at.desc())
 
     if current_user.role not in (UserRole.admin, UserRole.sgo_admin):
+        today = date.today()
         query = query.where(GrantCall.status == GrantCallStatus.open)
+        query = query.where(GrantCall.opening_date <= today)
+        query = query.where(GrantCall.closing_date >= today)
 
     result = await db.execute(query)
     calls = result.scalars().all()

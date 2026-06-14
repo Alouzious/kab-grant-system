@@ -294,6 +294,11 @@ async def _update_proposal_status_after_upload(proposal: Proposal, db: AsyncSess
 
     if required_types.issubset(uploaded_types):
         if fresh.status in (ProposalStatus.draft, ProposalStatus.missing_attachments):
+            is_open, reason = is_submission_open()
+            if not is_open:
+                await db.commit()
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=reason)
+
             fresh.status = ProposalStatus.submitted
             fresh.submitted_at = datetime.now(timezone.utc)
             history = ProposalStatusHistory(
